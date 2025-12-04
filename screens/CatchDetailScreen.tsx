@@ -3,12 +3,13 @@ import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/Button";
+import { weatherIcons, WeatherType } from "@/components/WeatherPicker";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings, formatWeight } from "@/hooks/useSettings";
@@ -113,13 +114,6 @@ export default function CatchDetailScreen() {
     windy: t.weather.windy,
   };
 
-  const weatherIcons: Record<string, keyof typeof Feather.glyphMap> = {
-    sunny: "sun",
-    cloudy: "cloud",
-    rainy: "cloud-rain",
-    windy: "wind",
-  };
-
   return (
     <ThemedView style={styles.container}>
       <ScrollView
@@ -183,8 +177,8 @@ export default function CatchDetailScreen() {
               />
             ) : null}
             {catchItem.weather ? (
-              <DetailRow
-                icon={weatherIcons[catchItem.weather]}
+              <WeatherDetailRow
+                weather={catchItem.weather as WeatherType}
                 label={t.catchDetail.weather}
                 value={weatherLabels[catchItem.weather]}
                 theme={theme}
@@ -239,6 +233,33 @@ function DetailRow({ icon, label, value, theme }: DetailRowProps) {
     <View style={detailStyles.row}>
       <View style={[detailStyles.iconContainer, { backgroundColor: theme.backgroundSecondary }]}>
         <Feather name={icon} size={18} color={theme.link} />
+      </View>
+      <View style={detailStyles.textContainer}>
+        <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          {label}
+        </ThemedText>
+        <ThemedText type="body">{value}</ThemedText>
+      </View>
+    </View>
+  );
+}
+
+interface WeatherDetailRowProps {
+  weather: WeatherType;
+  label: string;
+  value: string;
+  theme: any;
+}
+
+function WeatherDetailRow({ weather, label, value, theme }: WeatherDetailRowProps) {
+  return (
+    <View style={detailStyles.row}>
+      <View style={[detailStyles.iconContainer, { backgroundColor: theme.backgroundSecondary }]}>
+        <MaterialCommunityIcons 
+          name={weatherIcons[weather]} 
+          size={22} 
+          color={theme.link} 
+        />
       </View>
       <View style={detailStyles.textContainer}>
         <ThemedText type="small" style={{ color: theme.textSecondary }}>

@@ -1,25 +1,27 @@
 import React from "react";
 import { View, StyleSheet, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-type WeatherType = "sunny" | "cloudy" | "rainy" | "windy";
+export type WeatherType = "sunny" | "cloudy" | "rainy" | "windy";
 
 interface WeatherPickerProps {
   value: WeatherType | null;
   onChange: (weather: WeatherType | null) => void;
 }
 
-const weatherOptions: { type: WeatherType; icon: keyof typeof Feather.glyphMap }[] = [
-  { type: "sunny", icon: "sun" },
-  { type: "cloudy", icon: "cloud" },
-  { type: "rainy", icon: "cloud-rain" },
-  { type: "windy", icon: "wind" },
-];
+export const weatherIcons: Record<WeatherType, keyof typeof MaterialCommunityIcons.glyphMap> = {
+  sunny: "weather-sunny",
+  cloudy: "weather-cloudy",
+  rainy: "weather-pouring",
+  windy: "weather-windy",
+};
+
+const weatherOptions: WeatherType[] = ["sunny", "cloudy", "rainy", "windy"];
 
 export function WeatherPicker({ value, onChange }: WeatherPickerProps) {
   const { theme } = useTheme();
@@ -35,12 +37,12 @@ export function WeatherPicker({ value, onChange }: WeatherPickerProps) {
 
   return (
     <View style={styles.container}>
-      {weatherOptions.map((option) => {
-        const isSelected = value === option.type;
+      {weatherOptions.map((weatherType) => {
+        const isSelected = value === weatherType;
         return (
           <Pressable
-            key={option.type}
-            onPress={() => handlePress(option.type)}
+            key={weatherType}
+            onPress={() => handlePress(weatherType)}
             style={[
               styles.option,
               {
@@ -51,11 +53,13 @@ export function WeatherPicker({ value, onChange }: WeatherPickerProps) {
               },
             ]}
           >
-            <Feather
-              name={option.icon}
-              size={24}
-              color={isSelected ? "#FFFFFF" : theme.text}
-            />
+            <View style={styles.iconWrapper}>
+              <MaterialCommunityIcons
+                name={weatherIcons[weatherType]}
+                size={28}
+                color={isSelected ? "#FFFFFF" : theme.link}
+              />
+            </View>
             <ThemedText
               type="small"
               style={[
@@ -63,7 +67,7 @@ export function WeatherPicker({ value, onChange }: WeatherPickerProps) {
                 { color: isSelected ? "#FFFFFF" : theme.text },
               ]}
             >
-              {t.weather[option.type]}
+              {t.weather[weatherType]}
             </ThemedText>
           </Pressable>
         );
@@ -82,11 +86,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.xs,
-    borderWidth: 1,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1.5,
+    minHeight: 80,
+  },
+  iconWrapper: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
   },
   label: {
     marginTop: Spacing.xs,
     fontSize: 11,
+    fontWeight: "500",
+    textAlign: "center",
   },
 });
