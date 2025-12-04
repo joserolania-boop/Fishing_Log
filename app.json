@@ -18,6 +18,7 @@
       }
     },
     "android": {
+      "package": "com.joserolania.fishinglog",
       "adaptiveIcon": {
         "backgroundColor": "#1E88E5",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
