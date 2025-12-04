@@ -58,12 +58,16 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       ) : null}
 
       <View style={styles.content}>
-        <ThemedText type="h1" style={styles.title}>
-          Something went wrong
+        <View style={[styles.iconContainer, { backgroundColor: theme.backgroundSecondary }]}>
+          <Feather name="anchor" size={48} color={theme.textSecondary} />
+        </View>
+
+        <ThemedText type="h2" style={styles.title}>
+          Oops! The Fishing Log app encountered a problem.
         </ThemedText>
 
         <ThemedText type="body" style={styles.message}>
-          Please reload the app to continue.
+          Don't worry, your catches are safe. Let's get back to fishing!
         </ThemedText>
 
         <Pressable
@@ -81,7 +85,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             type="body"
             style={[styles.buttonText, { color: theme.buttonText }]}
           >
-            Try Again
+            Cast Again
           </ThemedText>
         </Pressable>
       </View>
@@ -159,14 +163,20 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 600,
   },
+  iconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.md,
+  },
   title: {
     textAlign: "center",
-    lineHeight: 40,
   },
   message: {
     textAlign: "center",
     opacity: 0.7,
-    lineHeight: 24,
   },
   topButton: {
     position: "absolute",

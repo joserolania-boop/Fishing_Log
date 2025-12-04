@@ -3,12 +3,18 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet } from "react-native";
-import HomeStackNavigator from "@/navigation/HomeStackNavigator";
-import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
+import CatchesStackNavigator from "@/navigation/CatchesStackNavigator";
+import StatsScreen from "@/screens/StatsScreen";
+import ExportScreen from "@/screens/ExportScreen";
+import ProfileScreen from "@/screens/ProfileScreen";
 import { useTheme } from "@/hooks/useTheme";
+import { useLanguage } from "@/hooks/useLanguage";
+import { getCommonScreenOptions } from "@/navigation/screenOptions";
 
 export type MainTabParamList = {
-  HomeTab: undefined;
+  CatchesTab: undefined;
+  StatsTab: undefined;
+  ExportTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -16,10 +22,11 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
+  const { t } = useLanguage();
 
   return (
     <Tab.Navigator
-      initialRouteName="HomeTab"
+      initialRouteName="CatchesTab"
       screenOptions={{
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
@@ -44,20 +51,46 @@ export default function MainTabNavigator() {
       }}
     >
       <Tab.Screen
-        name="HomeTab"
-        component={HomeStackNavigator}
+        name="CatchesTab"
+        component={CatchesStackNavigator}
         options={{
-          title: "Home",
+          title: t.tabs.catches,
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Feather name="anchor" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="StatsTab"
+        component={StatsScreen}
+        options={{
+          ...getCommonScreenOptions({ theme, isDark }),
+          headerShown: true,
+          title: t.stats.title,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="bar-chart-2" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ExportTab"
+        component={ExportScreen}
+        options={{
+          ...getCommonScreenOptions({ theme, isDark }),
+          headerShown: true,
+          title: t.export.title,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="download" size={size} color={color} />
           ),
         }}
       />
       <Tab.Screen
         name="ProfileTab"
-        component={ProfileStackNavigator}
+        component={ProfileScreen}
         options={{
-          title: "Profile",
+          ...getCommonScreenOptions({ theme, isDark }),
+          headerShown: true,
+          title: t.profile.title,
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),
