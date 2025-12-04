@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, RefreshControl, TextInput, Pressable } from "react-native";
+import { View, StyleSheet, RefreshControl, TextInput, Pressable, Dimensions } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 
 import { ScreenFlatList } from "@/components/ScreenFlatList";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { CatchCard } from "@/components/CatchCard";
 import { AdBanner } from "@/components/AdBanner";
-import { EmptyState } from "@/components/EmptyState";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -17,6 +17,8 @@ import { Catch, getAllCatches, initDatabase } from "@/utils/database";
 import { CatchesStackParamList } from "@/navigation/CatchesStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<CatchesStackParamList>;
+
+const { width: screenWidth } = Dimensions.get("window");
 
 export default function CatchesScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -137,11 +139,34 @@ export default function CatchesScreen() {
 
   const ListEmpty = () =>
     !isLoading ? (
-      <EmptyState
-        icon="anchor"
-        title={t.catches.empty}
-        subtitle={t.catches.emptySubtitle}
-      />
+      <View style={styles.emptyStateContainer}>
+        <View style={styles.illustrationContainer}>
+          <Image
+            source={require("../assets/images/empty-state-fishing.png")}
+            style={styles.illustration}
+            contentFit="cover"
+          />
+        </View>
+        <View style={styles.emptyTextContainer}>
+          <View
+            style={[
+              styles.emptyIconContainer,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <Feather name="anchor" size={32} color={theme.link} />
+          </View>
+          <ThemedText type="h3" style={styles.emptyTitle}>
+            {t.catches.empty}
+          </ThemedText>
+          <ThemedText
+            type="body"
+            style={[styles.emptySubtitle, { color: theme.textSecondary }]}
+          >
+            {t.catches.emptySubtitle}
+          </ThemedText>
+        </View>
+      </View>
     ) : null;
 
   React.useLayoutEffect(() => {
@@ -207,6 +232,55 @@ const styles = StyleSheet.create({
   },
   emptyContent: {
     flexGrow: 1,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    marginHorizontal: -Spacing.xl,
+    paddingTop: Spacing.xl,
+  },
+  illustrationContainer: {
+    width: screenWidth - Spacing.xl * 2,
+    height: 220,
+    borderRadius: BorderRadius.sm,
+    overflow: "hidden",
+    marginBottom: Spacing.xl,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  illustration: {
+    width: "100%",
+    height: "100%",
+    borderRadius: BorderRadius.sm,
+  },
+  emptyTextContainer: {
+    alignItems: "center",
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
+  },
+  emptyIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
     justifyContent: "center",
+    marginBottom: Spacing.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  emptyTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+  emptySubtitle: {
+    textAlign: "center",
+    maxWidth: 280,
   },
 });
