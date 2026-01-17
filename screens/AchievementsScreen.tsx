@@ -41,29 +41,44 @@ export default function AchievementsScreen() {
       const catches = await getAllCatches();
       const statsData = await getStats();
 
-      // Calculate unique species
-      const uniqueSpecies = new Set(catches.map((c) => c.species.toLowerCase())).size;
+      // Calculate unique species (only if there are catches)
+      const uniqueSpecies = catches.length > 0 
+        ? new Set(catches.map((c) => c.species.toLowerCase())).size 
+        : 0;
 
       // Calculate total weight
       const totalWeight = catches.reduce((sum, c) => sum + c.weight, 0);
 
-      // Calculate unique days
-      const uniqueDays = new Set(
-        catches.map((c) => new Date(c.dateTime).toDateString())
-      ).size;
+      // Calculate unique days (only if there are catches)
+      const uniqueDays = catches.length > 0
+        ? new Set(catches.map((c) => new Date(c.dateTime).toDateString())).size
+        : 0;
 
-      // Biggest catch weight
-      const biggestWeight = statsData.biggestCatch?.weight || 0;
+      // Biggest catch weight - ensure it's a valid number
+      const biggestWeight = (statsData.biggestCatch?.weight && statsData.biggestCatch.weight > 0) 
+        ? statsData.biggestCatch.weight 
+        : 0;
+
+      // Total catches - ensure it's a valid number
+      const totalCatches = statsData.totalCatches || 0;
+
+      console.log("Achievement calculations:", {
+        totalCatches,
+        uniqueSpecies,
+        uniqueDays,
+        biggestWeight,
+        catchesCount: catches.length
+      });
 
       setStats({
-        totalCatches: statsData.totalCatches,
+        totalCatches,
         uniqueSpecies,
         biggestWeight,
         totalWeight,
         daysActive: uniqueDays,
       });
 
-      // Define achievements
+      // Define achievements - using local calculated values to ensure accuracy
       const achievementsList: Achievement[] = [
         {
           id: "first_catch",
@@ -71,8 +86,8 @@ export default function AchievementsScreen() {
           titleKey: "achievements.firstCatch",
           descriptionKey: "achievements.firstCatchDesc",
           requirement: 1,
-          current: statsData.totalCatches,
-          unlocked: statsData.totalCatches >= 1,
+          current: totalCatches,
+          unlocked: totalCatches >= 1,
           color: "#4CAF50",
         },
         {
@@ -81,8 +96,8 @@ export default function AchievementsScreen() {
           titleKey: "achievements.catch10",
           descriptionKey: "achievements.catch10Desc",
           requirement: 10,
-          current: statsData.totalCatches,
-          unlocked: statsData.totalCatches >= 10,
+          current: totalCatches,
+          unlocked: totalCatches >= 10,
           color: "#2196F3",
         },
         {
@@ -91,8 +106,8 @@ export default function AchievementsScreen() {
           titleKey: "achievements.catch50",
           descriptionKey: "achievements.catch50Desc",
           requirement: 50,
-          current: statsData.totalCatches,
-          unlocked: statsData.totalCatches >= 50,
+          current: totalCatches,
+          unlocked: totalCatches >= 50,
           color: "#9C27B0",
         },
         {
@@ -101,8 +116,8 @@ export default function AchievementsScreen() {
           titleKey: "achievements.catch100",
           descriptionKey: "achievements.catch100Desc",
           requirement: 100,
-          current: statsData.totalCatches,
-          unlocked: statsData.totalCatches >= 100,
+          current: totalCatches,
+          unlocked: totalCatches >= 100,
           color: "#FF9800",
         },
         {
@@ -131,7 +146,7 @@ export default function AchievementsScreen() {
           titleKey: "achievements.bigCatch",
           descriptionKey: "achievements.bigCatchDesc",
           requirement: 5,
-          current: biggestWeight,
+          current: Math.round(biggestWeight * 10) / 10,
           unlocked: biggestWeight >= 5,
           color: "#FF5722",
         },
@@ -141,7 +156,7 @@ export default function AchievementsScreen() {
           titleKey: "achievements.monsterCatch",
           descriptionKey: "achievements.monsterCatchDesc",
           requirement: 20,
-          current: biggestWeight,
+          current: Math.round(biggestWeight * 10) / 10,
           unlocked: biggestWeight >= 20,
           color: "#673AB7",
         },
@@ -317,9 +332,10 @@ function AchievementCard({ achievement, theme, getTranslation }: {
       style={[
         styles.achievementCard,
         {
-          backgroundColor: theme.backgroundDefault,
+          backgroundColor: achievement.unlocked ? theme.backgroundDefault : theme.backgroundSecondary,
           borderColor: achievement.unlocked ? achievement.color : theme.border,
-          opacity: achievement.unlocked ? 1 : 0.7,
+          borderWidth: achievement.unlocked ? 2 : 1,
+          opacity: achievement.unlocked ? 1 : 0.5,
         },
       ]}
     >
@@ -327,18 +343,22 @@ function AchievementCard({ achievement, theme, getTranslation }: {
         style={[
           styles.achievementIcon,
           {
-            backgroundColor: achievement.unlocked ? achievement.color : theme.backgroundSecondary,
+            backgroundColor: achievement.unlocked ? achievement.color : theme.border,
           },
         ]}
       >
-        <MaterialCommunityIcons
-          name={achievement.icon as any}
-          size={24}
-          color={achievement.unlocked ? "#FFFFFF" : theme.textSecondary}
-        />
+        {achievement.unlocked ? (
+          <MaterialCommunityIcons
+            name={achievement.icon as any}
+            size={24}
+            color="#FFFFFF"
+          />
+        ) : (
+          <Feather name="lock" size={20} color={theme.textSecondary} />
+        )}
       </View>
       <View style={styles.achievementContent}>
-        <ThemedText type="body" style={{ fontWeight: "600" }}>
+        <ThemedText type="body" style={{ fontWeight: "600", color: achievement.unlocked ? theme.text : theme.textSecondary }}>
           {getTranslation(achievement.titleKey)}
         </ThemedText>
         <ThemedText type="small" style={{ color: theme.textSecondary }}>
@@ -360,8 +380,12 @@ function AchievementCard({ achievement, theme, getTranslation }: {
           </View>
         )}
       </View>
-      {achievement.unlocked && (
+      {achievement.unlocked ? (
         <Feather name="check-circle" size={24} color={achievement.color} />
+      ) : (
+        <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          {Math.round(progress)}%
+        </ThemedText>
       )}
     </View>
   );

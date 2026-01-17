@@ -4,7 +4,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const SETTINGS_KEY = "@fishing_log_settings";
 
 export type UnitSystem = "metric" | "imperial";
-export type AvatarType = "standing" | "boat" | "casting";
+export type AvatarType = 
+  | "standing" | "boat" | "casting"  // Image-based avatars
+  | "fish" | "shark" | "whale" | "octopus" | "crab" | "lobster"  // Sea creatures
+  | "anchor" | "ship" | "hook" | "net";  // Fishing themed
 
 export interface Settings {
   displayName: string;

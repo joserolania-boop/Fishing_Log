@@ -12,151 +12,102 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface FishSpecies {
   id: string;
-  name: string;
+  nameKey: string;
   scientificName: string;
-  family: string;
-  habitat: string;
+  familyKey: string;
+  habitatKey: string;
   avgWeight: string;
   maxWeight: string;
-  season: string;
-  tips: string;
-  image?: string;
+  seasonKey: string;
+  tipsKey: string;
+  emoji: string;
 }
 
-// Common freshwater and saltwater fish species
+// Comprehensive fish database with translation keys
 const fishDatabase: FishSpecies[] = [
-  {
-    id: "1",
-    name: "Largemouth Bass",
-    scientificName: "Micropterus salmoides",
-    family: "Centrarchidae",
-    habitat: "Freshwater lakes, ponds, rivers",
-    avgWeight: "1-2 kg",
-    maxWeight: "10+ kg",
-    season: "Spring to Fall",
-    tips: "Best caught early morning or evening. Use plastic worms, crankbaits, or spinnerbaits.",
-  },
-  {
-    id: "2",
-    name: "Rainbow Trout",
-    scientificName: "Oncorhynchus mykiss",
-    family: "Salmonidae",
-    habitat: "Cold freshwater streams and lakes",
-    avgWeight: "0.5-2 kg",
-    maxWeight: "10+ kg",
-    season: "Year-round, best in Spring",
-    tips: "Use flies, spinners, or live bait. Fish in cold, oxygenated water.",
-  },
-  {
-    id: "3",
-    name: "Common Carp",
-    scientificName: "Cyprinus carpio",
-    family: "Cyprinidae",
-    habitat: "Lakes, rivers, ponds",
-    avgWeight: "2-5 kg",
-    maxWeight: "30+ kg",
-    season: "Spring to Fall",
-    tips: "Use corn, bread, or boilies. Be patient and use heavy tackle.",
-  },
-  {
-    id: "4",
-    name: "Bluegill",
-    scientificName: "Lepomis macrochirus",
-    family: "Centrarchidae",
-    habitat: "Freshwater ponds and lakes",
-    avgWeight: "0.1-0.3 kg",
-    maxWeight: "2 kg",
-    season: "Spring to Summer",
-    tips: "Great for beginners. Use worms, crickets, or small jigs.",
-  },
-  {
-    id: "5",
-    name: "Channel Catfish",
-    scientificName: "Ictalurus punctatus",
-    family: "Ictaluridae",
-    habitat: "Rivers, lakes, reservoirs",
-    avgWeight: "1-5 kg",
-    maxWeight: "25+ kg",
-    season: "Spring to Fall",
-    tips: "Best at night. Use stink bait, cut bait, or live bait on bottom.",
-  },
-  {
-    id: "6",
-    name: "Northern Pike",
-    scientificName: "Esox lucius",
-    family: "Esocidae",
-    habitat: "Lakes and slow rivers",
-    avgWeight: "1-5 kg",
-    maxWeight: "25+ kg",
-    season: "Spring and Fall",
-    tips: "Use large spoons, jerkbaits, or live bait. Wire leader recommended.",
-  },
-  {
-    id: "7",
-    name: "Walleye",
-    scientificName: "Sander vitreus",
-    family: "Percidae",
-    habitat: "Large lakes and rivers",
-    avgWeight: "0.5-2 kg",
-    maxWeight: "10+ kg",
-    season: "Spring and Fall",
-    tips: "Best at dawn/dusk. Use jigs, minnows, or crankbaits in deep water.",
-  },
-  {
-    id: "8",
-    name: "Striped Bass",
-    scientificName: "Morone saxatilis",
-    family: "Moronidae",
-    habitat: "Coastal waters, estuaries",
-    avgWeight: "2-10 kg",
-    maxWeight: "50+ kg",
-    season: "Spring and Fall",
-    tips: "Use live bait, plugs, or jigs. Fish near structure and current.",
-  },
-  {
-    id: "9",
-    name: "Red Drum",
-    scientificName: "Sciaenops ocellatus",
-    family: "Sciaenidae",
-    habitat: "Coastal waters, estuaries",
-    avgWeight: "2-8 kg",
-    maxWeight: "40+ kg",
-    season: "Year-round",
-    tips: "Use cut bait, shrimp, or artificial lures. Fish near oyster beds.",
-  },
-  {
-    id: "10",
-    name: "Salmon (Atlantic)",
-    scientificName: "Salmo salar",
-    family: "Salmonidae",
-    habitat: "Ocean, rivers (spawning)",
-    avgWeight: "3-10 kg",
-    maxWeight: "35+ kg",
-    season: "Summer to Fall",
-    tips: "Use flies, spoons, or spinners. Fish during runs.",
-  },
-  {
-    id: "11",
-    name: "Perch (European)",
-    scientificName: "Perca fluviatilis",
-    family: "Percidae",
-    habitat: "Lakes and slow rivers",
-    avgWeight: "0.2-0.5 kg",
-    maxWeight: "3 kg",
-    season: "Year-round",
-    tips: "Use worms, small fish, or spinners. Fish near structure.",
-  },
-  {
-    id: "12",
-    name: "Tuna (Yellowfin)",
-    scientificName: "Thunnus albacares",
-    family: "Scombridae",
-    habitat: "Open ocean",
-    avgWeight: "20-50 kg",
-    maxWeight: "180+ kg",
-    season: "Summer",
-    tips: "Trolling with lures or live bait. Heavy tackle required.",
-  },
+  // FRESHWATER - BASS & SUNFISH
+  { id: "1", nameKey: "largemouthBass", scientificName: "Micropterus salmoides", familyKey: "centrarchidae", habitatKey: "freshwaterLakes", avgWeight: "1-2 kg", maxWeight: "10+ kg", seasonKey: "springToFall", tipsKey: "bassLargeTips", emoji: "🐟" },
+  { id: "2", nameKey: "smallmouthBass", scientificName: "Micropterus dolomieu", familyKey: "centrarchidae", habitatKey: "coolStreams", avgWeight: "0.5-1.5 kg", maxWeight: "5 kg", seasonKey: "springToFall", tipsKey: "bassSmallTips", emoji: "🐟" },
+  { id: "3", nameKey: "bluegill", scientificName: "Lepomis macrochirus", familyKey: "centrarchidae", habitatKey: "freshwaterPonds", avgWeight: "0.1-0.3 kg", maxWeight: "2 kg", seasonKey: "springToSummer", tipsKey: "bluegillTips", emoji: "🐟" },
+  { id: "4", nameKey: "crappie", scientificName: "Pomoxis spp.", familyKey: "centrarchidae", habitatKey: "freshwaterLakes", avgWeight: "0.2-0.5 kg", maxWeight: "2 kg", seasonKey: "springToFall", tipsKey: "crappieTips", emoji: "🐟" },
+  
+  // FRESHWATER - TROUT & SALMON
+  { id: "5", nameKey: "rainbowTrout", scientificName: "Oncorhynchus mykiss", familyKey: "salmonidae", habitatKey: "coldStreams", avgWeight: "0.5-2 kg", maxWeight: "10+ kg", seasonKey: "yearRoundSpring", tipsKey: "rainbowTroutTips", emoji: "🐟" },
+  { id: "6", nameKey: "brownTrout", scientificName: "Salmo trutta", familyKey: "salmonidae", habitatKey: "coldStreams", avgWeight: "0.5-3 kg", maxWeight: "15+ kg", seasonKey: "yearRound", tipsKey: "brownTroutTips", emoji: "🐟" },
+  { id: "7", nameKey: "brookTrout", scientificName: "Salvelinus fontinalis", familyKey: "salmonidae", habitatKey: "coldMountainStreams", avgWeight: "0.2-1 kg", maxWeight: "6 kg", seasonKey: "springToFall", tipsKey: "brookTroutTips", emoji: "🐟" },
+  { id: "8", nameKey: "atlanticSalmon", scientificName: "Salmo salar", familyKey: "salmonidae", habitatKey: "oceanRivers", avgWeight: "3-10 kg", maxWeight: "35+ kg", seasonKey: "summerToFall", tipsKey: "atlanticSalmonTips", emoji: "🐟" },
+  { id: "9", nameKey: "chinookSalmon", scientificName: "Oncorhynchus tshawytscha", familyKey: "salmonidae", habitatKey: "pacificOcean", avgWeight: "5-15 kg", maxWeight: "60+ kg", seasonKey: "summerToFall", tipsKey: "chinookTips", emoji: "🐟" },
+  { id: "10", nameKey: "cohoSalmon", scientificName: "Oncorhynchus kisutch", familyKey: "salmonidae", habitatKey: "pacificOcean", avgWeight: "3-6 kg", maxWeight: "15+ kg", seasonKey: "fallToWinter", tipsKey: "cohoTips", emoji: "🐟" },
+  
+  // FRESHWATER - CATFISH
+  { id: "11", nameKey: "channelCatfish", scientificName: "Ictalurus punctatus", familyKey: "ictaluridae", habitatKey: "riversLakes", avgWeight: "1-5 kg", maxWeight: "25+ kg", seasonKey: "springToFall", tipsKey: "channelCatTips", emoji: "🐡" },
+  { id: "12", nameKey: "blueCatfish", scientificName: "Ictalurus furcatus", familyKey: "ictaluridae", habitatKey: "largeRivers", avgWeight: "5-20 kg", maxWeight: "65+ kg", seasonKey: "yearRound", tipsKey: "blueCatTips", emoji: "🐡" },
+  { id: "13", nameKey: "flatheadCatfish", scientificName: "Pylodictis olivaris", familyKey: "ictaluridae", habitatKey: "largeRivers", avgWeight: "5-15 kg", maxWeight: "55+ kg", seasonKey: "summerToFall", tipsKey: "flatheadTips", emoji: "🐡" },
+  { id: "14", nameKey: "welsCatfish", scientificName: "Silurus glanis", familyKey: "siluridae", habitatKey: "europeanRivers", avgWeight: "10-50 kg", maxWeight: "300+ kg", seasonKey: "springToFall", tipsKey: "welsTips", emoji: "🐡" },
+  
+  // FRESHWATER - PIKE & MUSKIE
+  { id: "15", nameKey: "northernPike", scientificName: "Esox lucius", familyKey: "esocidae", habitatKey: "lakesSlowRivers", avgWeight: "1-5 kg", maxWeight: "25+ kg", seasonKey: "springAndFall", tipsKey: "pikeTips", emoji: "🐊" },
+  { id: "16", nameKey: "muskellunge", scientificName: "Esox masquinongy", familyKey: "esocidae", habitatKey: "clearLakes", avgWeight: "5-10 kg", maxWeight: "30+ kg", seasonKey: "fallToWinter", tipsKey: "muskieTips", emoji: "🐊" },
+  { id: "17", nameKey: "tigerMuskie", scientificName: "Esox masquinongy × lucius", familyKey: "esocidae", habitatKey: "stockedLakes", avgWeight: "3-8 kg", maxWeight: "15+ kg", seasonKey: "springAndFall", tipsKey: "tigerMuskieTips", emoji: "🐊" },
+  
+  // FRESHWATER - WALLEYE & PERCH
+  { id: "18", nameKey: "walleye", scientificName: "Sander vitreus", familyKey: "percidae", habitatKey: "largeLakesRivers", avgWeight: "0.5-2 kg", maxWeight: "10+ kg", seasonKey: "springAndFall", tipsKey: "walleyeTips", emoji: "🐟" },
+  { id: "19", nameKey: "yellowPerch", scientificName: "Perca flavescens", familyKey: "percidae", habitatKey: "lakesAndPonds", avgWeight: "0.1-0.3 kg", maxWeight: "1 kg", seasonKey: "yearRound", tipsKey: "yellowPerchTips", emoji: "🐟" },
+  { id: "20", nameKey: "europeanPerch", scientificName: "Perca fluviatilis", familyKey: "percidae", habitatKey: "europeanLakes", avgWeight: "0.2-0.5 kg", maxWeight: "3 kg", seasonKey: "yearRound", tipsKey: "europeanPerchTips", emoji: "🐟" },
+  { id: "21", nameKey: "zander", scientificName: "Sander lucioperca", familyKey: "percidae", habitatKey: "europeanLakes", avgWeight: "1-4 kg", maxWeight: "15+ kg", seasonKey: "yearRound", tipsKey: "zanderTips", emoji: "🐟" },
+  
+  // FRESHWATER - CARP & CYPRINIDS
+  { id: "22", nameKey: "commonCarp", scientificName: "Cyprinus carpio", familyKey: "cyprinidae", habitatKey: "lakesRiversPonds", avgWeight: "2-5 kg", maxWeight: "30+ kg", seasonKey: "springToFall", tipsKey: "carpTips", emoji: "🐡" },
+  { id: "23", nameKey: "mirrorCarp", scientificName: "Cyprinus carpio carpio", familyKey: "cyprinidae", habitatKey: "lakesRiversPonds", avgWeight: "3-8 kg", maxWeight: "35+ kg", seasonKey: "springToFall", tipsKey: "mirrorCarpTips", emoji: "🐡" },
+  { id: "24", nameKey: "grassCarp", scientificName: "Ctenopharyngodon idella", familyKey: "cyprinidae", habitatKey: "warmLakes", avgWeight: "5-15 kg", maxWeight: "40+ kg", seasonKey: "summerToFall", tipsKey: "grassCarpTips", emoji: "🐡" },
+  { id: "25", nameKey: "barbel", scientificName: "Barbus barbus", familyKey: "cyprinidae", habitatKey: "europeanRivers", avgWeight: "1-3 kg", maxWeight: "10+ kg", seasonKey: "summerToFall", tipsKey: "barbelTips", emoji: "🐟" },
+  { id: "26", nameKey: "tench", scientificName: "Tinca tinca", familyKey: "cyprinidae", habitatKey: "weedyPonds", avgWeight: "0.5-2 kg", maxWeight: "7+ kg", seasonKey: "summerToFall", tipsKey: "tenchTips", emoji: "🐟" },
+  { id: "27", nameKey: "bream", scientificName: "Abramis brama", familyKey: "cyprinidae", habitatKey: "slowRivers", avgWeight: "0.5-2 kg", maxWeight: "8+ kg", seasonKey: "springToFall", tipsKey: "breamTips", emoji: "🐟" },
+  { id: "28", nameKey: "roach", scientificName: "Rutilus rutilus", familyKey: "cyprinidae", habitatKey: "europeanWaters", avgWeight: "0.1-0.5 kg", maxWeight: "2 kg", seasonKey: "yearRound", tipsKey: "roachTips", emoji: "🐟" },
+  
+  // SALTWATER - GAMEFISH
+  { id: "29", nameKey: "stripedBass", scientificName: "Morone saxatilis", familyKey: "moronidae", habitatKey: "coastalEstuaries", avgWeight: "2-10 kg", maxWeight: "50+ kg", seasonKey: "springAndFall", tipsKey: "stripedBassTips", emoji: "🐟" },
+  { id: "30", nameKey: "redDrum", scientificName: "Sciaenops ocellatus", familyKey: "sciaenidae", habitatKey: "coastalEstuaries", avgWeight: "2-8 kg", maxWeight: "40+ kg", seasonKey: "yearRound", tipsKey: "redDrumTips", emoji: "🐟" },
+  { id: "31", nameKey: "blackDrum", scientificName: "Pogonias cromis", familyKey: "sciaenidae", habitatKey: "coastalWaters", avgWeight: "5-15 kg", maxWeight: "45+ kg", seasonKey: "springToFall", tipsKey: "blackDrumTips", emoji: "🐟" },
+  { id: "32", nameKey: "snook", scientificName: "Centropomus undecimalis", familyKey: "centropomidae", habitatKey: "tropicalCoasts", avgWeight: "2-8 kg", maxWeight: "25+ kg", seasonKey: "summerToFall", tipsKey: "snookTips", emoji: "🐟" },
+  { id: "33", nameKey: "tarpon", scientificName: "Megalops atlanticus", familyKey: "megalopidae", habitatKey: "tropicalCoasts", avgWeight: "20-50 kg", maxWeight: "130+ kg", seasonKey: "springToSummer", tipsKey: "tarponTips", emoji: "🐟" },
+  { id: "34", nameKey: "bonefish", scientificName: "Albula vulpes", familyKey: "albulidae", habitatKey: "tropicalFlats", avgWeight: "1-4 kg", maxWeight: "8+ kg", seasonKey: "yearRound", tipsKey: "bonefishTips", emoji: "🐟" },
+  { id: "35", nameKey: "permit", scientificName: "Trachinotus falcatus", familyKey: "carangidae", habitatKey: "tropicalFlats", avgWeight: "3-10 kg", maxWeight: "25+ kg", seasonKey: "yearRound", tipsKey: "permitTips", emoji: "🐟" },
+  
+  // SALTWATER - TUNA & BILLFISH
+  { id: "36", nameKey: "yellowfinTuna", scientificName: "Thunnus albacares", familyKey: "scombridae", habitatKey: "openOcean", avgWeight: "20-50 kg", maxWeight: "180+ kg", seasonKey: "summer", tipsKey: "yellowfinTips", emoji: "🐟" },
+  { id: "37", nameKey: "bluefinTuna", scientificName: "Thunnus thynnus", familyKey: "scombridae", habitatKey: "openOcean", avgWeight: "50-150 kg", maxWeight: "680+ kg", seasonKey: "summerToFall", tipsKey: "bluefinTips", emoji: "🐟" },
+  { id: "38", nameKey: "skipjackTuna", scientificName: "Katsuwonus pelamis", familyKey: "scombridae", habitatKey: "tropicalOcean", avgWeight: "2-6 kg", maxWeight: "15+ kg", seasonKey: "yearRound", tipsKey: "skipjackTips", emoji: "🐟" },
+  { id: "39", nameKey: "albacore", scientificName: "Thunnus alalunga", familyKey: "scombridae", habitatKey: "temperateOcean", avgWeight: "5-15 kg", maxWeight: "40+ kg", seasonKey: "summerToFall", tipsKey: "albacoreTips", emoji: "🐟" },
+  { id: "40", nameKey: "bluemarlin", scientificName: "Makaira nigricans", familyKey: "istiophoridae", habitatKey: "tropicalOcean", avgWeight: "100-200 kg", maxWeight: "600+ kg", seasonKey: "summer", tipsKey: "bluemarlinTips", emoji: "🐟" },
+  { id: "41", nameKey: "sailfish", scientificName: "Istiophorus platypterus", familyKey: "istiophoridae", habitatKey: "tropicalOcean", avgWeight: "25-50 kg", maxWeight: "100+ kg", seasonKey: "winterToSpring", tipsKey: "sailfishTips", emoji: "🐟" },
+  { id: "42", nameKey: "swordfish", scientificName: "Xiphias gladius", familyKey: "xiphiidae", habitatKey: "openOcean", avgWeight: "50-100 kg", maxWeight: "450+ kg", seasonKey: "summerToFall", tipsKey: "swordfishTips", emoji: "🐟" },
+  
+  // SALTWATER - REEF & BOTTOM
+  { id: "43", nameKey: "redSnapper", scientificName: "Lutjanus campechanus", familyKey: "lutjanidae", habitatKey: "gulfReefs", avgWeight: "2-5 kg", maxWeight: "20+ kg", seasonKey: "summerToFall", tipsKey: "redSnapperTips", emoji: "🐟" },
+  { id: "44", nameKey: "yellowtailSnapper", scientificName: "Ocyurus chrysurus", familyKey: "lutjanidae", habitatKey: "tropicalReefs", avgWeight: "0.5-2 kg", maxWeight: "4+ kg", seasonKey: "yearRound", tipsKey: "yellowtailSnapperTips", emoji: "🐟" },
+  { id: "45", nameKey: "grouper", scientificName: "Epinephelus spp.", familyKey: "serranidae", habitatKey: "tropicalReefs", avgWeight: "5-20 kg", maxWeight: "100+ kg", seasonKey: "springToFall", tipsKey: "grouperTips", emoji: "🐟" },
+  { id: "46", nameKey: "hogfish", scientificName: "Lachnolaimus maximus", familyKey: "labridae", habitatKey: "atlanticReefs", avgWeight: "1-3 kg", maxWeight: "10+ kg", seasonKey: "yearRound", tipsKey: "hogfishTips", emoji: "🐟" },
+  { id: "47", nameKey: "halibut", scientificName: "Hippoglossus spp.", familyKey: "pleuronectidae", habitatKey: "coldOceanFloors", avgWeight: "10-30 kg", maxWeight: "300+ kg", seasonKey: "summerToFall", tipsKey: "halibutTips", emoji: "🐟" },
+  { id: "48", nameKey: "flounder", scientificName: "Paralichthys spp.", familyKey: "paralichthyidae", habitatKey: "coastalSandyBottoms", avgWeight: "0.5-2 kg", maxWeight: "10+ kg", seasonKey: "fallToWinter", tipsKey: "flounderTips", emoji: "🐟" },
+  
+  // SALTWATER - PELAGIC
+  { id: "49", nameKey: "mahimahi", scientificName: "Coryphaena hippurus", familyKey: "coryphaenidae", habitatKey: "tropicalOcean", avgWeight: "5-15 kg", maxWeight: "40+ kg", seasonKey: "springToFall", tipsKey: "mahiTips", emoji: "🐟" },
+  { id: "50", nameKey: "wahoo", scientificName: "Acanthocybium solandri", familyKey: "scombridae", habitatKey: "tropicalOcean", avgWeight: "10-25 kg", maxWeight: "80+ kg", seasonKey: "yearRound", tipsKey: "wahooTips", emoji: "🐟" },
+  { id: "51", nameKey: "kingMackerel", scientificName: "Scomberomorus cavalla", familyKey: "scombridae", habitatKey: "atlanticCoast", avgWeight: "5-15 kg", maxWeight: "40+ kg", seasonKey: "springToFall", tipsKey: "kingMackerelTips", emoji: "🐟" },
+  { id: "52", nameKey: "spanishMackerel", scientificName: "Scomberomorus maculatus", familyKey: "scombridae", habitatKey: "coastalWaters", avgWeight: "1-3 kg", maxWeight: "6+ kg", seasonKey: "springToFall", tipsKey: "spanishMackerelTips", emoji: "🐟" },
+  { id: "53", nameKey: "cobia", scientificName: "Rachycentron canadum", familyKey: "rachycentridae", habitatKey: "tropicalCoasts", avgWeight: "5-20 kg", maxWeight: "60+ kg", seasonKey: "springToSummer", tipsKey: "cobiaTips", emoji: "🐟" },
+  { id: "54", nameKey: "amberjack", scientificName: "Seriola dumerili", familyKey: "carangidae", habitatKey: "reefStructures", avgWeight: "10-30 kg", maxWeight: "70+ kg", seasonKey: "springToFall", tipsKey: "amberjackTips", emoji: "🐟" },
+  
+  // SHARKS
+  { id: "55", nameKey: "blacktipShark", scientificName: "Carcharhinus limbatus", familyKey: "carcharhinidae", habitatKey: "coastalWaters", avgWeight: "10-30 kg", maxWeight: "120+ kg", seasonKey: "springToFall", tipsKey: "blacktipTips", emoji: "🦈" },
+  { id: "56", nameKey: "bullShark", scientificName: "Carcharhinus leucas", familyKey: "carcharhinidae", habitatKey: "coastalFreshwater", avgWeight: "50-100 kg", maxWeight: "300+ kg", seasonKey: "summerToFall", tipsKey: "bullSharkTips", emoji: "🦈" },
+  { id: "57", nameKey: "hammerheadShark", scientificName: "Sphyrna spp.", familyKey: "sphyrnidae", habitatKey: "tropicalWaters", avgWeight: "50-150 kg", maxWeight: "450+ kg", seasonKey: "summerToFall", tipsKey: "hammerheadTips", emoji: "🦈" },
+  { id: "58", nameKey: "makoShark", scientificName: "Isurus oxyrinchus", familyKey: "lamnidae", habitatKey: "openOcean", avgWeight: "50-150 kg", maxWeight: "500+ kg", seasonKey: "summerToFall", tipsKey: "makoTips", emoji: "🦈" },
+  
+  // ASIAN SPECIES
+  { id: "59", nameKey: "asianSeaBass", scientificName: "Lates calcarifer", familyKey: "latidae", habitatKey: "indoPacific", avgWeight: "5-20 kg", maxWeight: "60+ kg", seasonKey: "yearRound", tipsKey: "barramundiTips", emoji: "🐟" },
+  { id: "60", nameKey: "giantTrevally", scientificName: "Caranx ignobilis", familyKey: "carangidae", habitatKey: "indoPacificReefs", avgWeight: "10-30 kg", maxWeight: "80+ kg", seasonKey: "yearRound", tipsKey: "gtTips", emoji: "🐟" },
 ];
 
 export default function SpeciesGuideScreen() {
@@ -166,48 +117,70 @@ export default function SpeciesGuideScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecies, setSelectedSpecies] = useState<FishSpecies | null>(null);
 
+  // Helper to get translated text with fallback
+  const getText = (key: string, fallback: string): string => {
+    const speciesData = (t as any).speciesData;
+    return speciesData?.[key] || fallback;
+  };
+
+  // Get display data for a fish
+  const getFishDisplay = (fish: FishSpecies) => ({
+    name: getText(fish.nameKey, fish.nameKey.replace(/([A-Z])/g, ' $1').trim()),
+    family: getText(fish.familyKey, fish.familyKey),
+    habitat: getText(fish.habitatKey, fish.habitatKey),
+    season: getText(fish.seasonKey, fish.seasonKey),
+    tips: getText(fish.tipsKey, "Use appropriate tackle and techniques for this species."),
+  });
+
   const filteredSpecies = useMemo(() => {
     if (!searchQuery.trim()) return fishDatabase;
     const query = searchQuery.toLowerCase();
-    return fishDatabase.filter(
-      (fish) =>
-        fish.name.toLowerCase().includes(query) ||
-        fish.family.toLowerCase().includes(query) ||
-        fish.habitat.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
+    return fishDatabase.filter((fish) => {
+      const display = getFishDisplay(fish);
+      return (
+        display.name.toLowerCase().includes(query) ||
+        display.family.toLowerCase().includes(query) ||
+        display.habitat.toLowerCase().includes(query) ||
+        fish.scientificName.toLowerCase().includes(query)
+      );
+    });
+  }, [searchQuery, t]);
 
-  const renderSpeciesCard = ({ item }: { item: FishSpecies }) => (
-    <Pressable
-      onPress={() => setSelectedSpecies(item)}
-      style={[
-        styles.speciesCard,
-        { backgroundColor: theme.backgroundDefault, borderColor: theme.border },
-      ]}
-    >
-      <View style={[styles.speciesIcon, { backgroundColor: theme.backgroundSecondary }]}>
-        <Feather name="anchor" size={24} color={theme.link} />
-      </View>
-      <View style={styles.speciesInfo}>
-        <ThemedText type="body" style={{ fontWeight: "600" }}>
-          {item.name}
-        </ThemedText>
-        <ThemedText type="small" style={{ color: theme.textSecondary, fontStyle: "italic" }}>
-          {item.scientificName}
-        </ThemedText>
-        <View style={styles.tagsRow}>
-          <View style={[styles.tag, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {item.family}
-            </ThemedText>
+  const renderSpeciesCard = ({ item }: { item: FishSpecies }) => {
+    const display = getFishDisplay(item);
+    return (
+      <Pressable
+        onPress={() => setSelectedSpecies(item)}
+        style={[
+          styles.speciesCard,
+          { backgroundColor: theme.backgroundDefault, borderColor: theme.border },
+        ]}
+      >
+        <View style={[styles.speciesIcon, { backgroundColor: theme.backgroundSecondary }]}>
+          <ThemedText style={{ fontSize: 24 }}>{item.emoji}</ThemedText>
+        </View>
+        <View style={styles.speciesInfo}>
+          <ThemedText type="body" style={{ fontWeight: "600" }}>
+            {display.name}
+          </ThemedText>
+          <ThemedText type="small" style={{ color: theme.textSecondary, fontStyle: "italic" }}>
+            {item.scientificName}
+          </ThemedText>
+          <View style={styles.tagsRow}>
+            <View style={[styles.tag, { backgroundColor: theme.backgroundSecondary }]}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                {display.family}
+              </ThemedText>
+            </View>
           </View>
         </View>
-      </View>
-      <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-    </Pressable>
-  );
+        <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+      </Pressable>
+    );
+  };
 
   if (selectedSpecies) {
+    const selectedDisplay = getFishDisplay(selectedSpecies);
     return (
       <ThemedView style={styles.container}>
         <View style={[styles.header, { paddingTop: paddingTop + Spacing.md }]}>
@@ -215,7 +188,7 @@ export default function SpeciesGuideScreen() {
             <Feather name="arrow-left" size={24} color={theme.text} />
           </Pressable>
           <ThemedText type="h3" style={styles.headerTitle}>
-            {selectedSpecies.name}
+            {selectedDisplay.name}
           </ThemedText>
           <View style={{ width: 24 }} />
         </View>
@@ -227,7 +200,7 @@ export default function SpeciesGuideScreen() {
           renderItem={() => (
             <View>
               <View style={[styles.detailIcon, { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather name="anchor" size={48} color={theme.link} />
+                <ThemedText style={{ fontSize: 48 }}>{selectedSpecies.emoji}</ThemedText>
               </View>
 
               <ThemedText type="small" style={[styles.scientificName, { color: theme.textSecondary }]}>
@@ -238,13 +211,13 @@ export default function SpeciesGuideScreen() {
                 <DetailRow
                   icon="layers"
                   label={t.species?.family || "Family"}
-                  value={selectedSpecies.family}
+                  value={selectedDisplay.family}
                   theme={theme}
                 />
                 <DetailRow
                   icon="map-pin"
                   label={t.species?.habitat || "Habitat"}
-                  value={selectedSpecies.habitat}
+                  value={selectedDisplay.habitat}
                   theme={theme}
                 />
                 <DetailRow
@@ -262,7 +235,7 @@ export default function SpeciesGuideScreen() {
                 <DetailRow
                   icon="calendar"
                   label={t.species?.bestSeason || "Best Season"}
-                  value={selectedSpecies.season}
+                  value={selectedDisplay.season}
                   theme={theme}
                 />
               </View>
@@ -275,7 +248,7 @@ export default function SpeciesGuideScreen() {
                   </ThemedText>
                 </View>
                 <ThemedText type="body" style={{ lineHeight: 24 }}>
-                  {selectedSpecies.tips}
+                  {selectedDisplay.tips}
                 </ThemedText>
               </View>
             </View>

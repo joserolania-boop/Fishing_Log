@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Alert, ScrollView, Share, Dimensions, FlatList } from "react-native";
+import { View, StyleSheet, Pressable, Alert, ScrollView, Share, Dimensions, FlatList, Platform } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
@@ -69,26 +69,41 @@ export default function CatchDetailScreen() {
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      t.catchDetail.deleteConfirm,
-      t.catchDetail.deleteMessage,
-      [
-        { text: t.catchDetail.deleteCancel, style: "cancel" },
-        {
-          text: t.catchDetail.deleteOk,
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteCatch(catchId);
-              navigation.goBack();
-            } catch (error) {
-              console.error("Failed to delete catch:", error);
-            }
+  const handleDelete = async () => {
+    const confirmMessage = `${t.catchDetail.deleteConfirm}\n${t.catchDetail.deleteMessage}`;
+    
+    // Use window.confirm for web, Alert.alert for native
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(confirmMessage);
+      if (confirmed) {
+        try {
+          await deleteCatch(catchId);
+          navigation.goBack();
+        } catch (error) {
+          console.error("Failed to delete catch:", error);
+        }
+      }
+    } else {
+      Alert.alert(
+        t.catchDetail.deleteConfirm,
+        t.catchDetail.deleteMessage,
+        [
+          { text: t.catchDetail.deleteCancel, style: "cancel" },
+          {
+            text: t.catchDetail.deleteOk,
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await deleteCatch(catchId);
+                navigation.goBack();
+              } catch (error) {
+                console.error("Failed to delete catch:", error);
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const handleShare = async () => {
