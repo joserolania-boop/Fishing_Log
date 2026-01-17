@@ -62,7 +62,9 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Fishing Log to use your location to record where you caught your fish."
         }
-      ]
+      ],
+      "expo-localization",
+      "expo-sqlite"
     ],
     "experiments": {
       "reactCompiler": true
