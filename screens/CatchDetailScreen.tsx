@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Alert, ScrollView, Share } from "react-native";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { View, StyleSheet, Pressable, Alert, ScrollView, Share, Dimensions, FlatList } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
@@ -18,6 +18,8 @@ import { Spacing, BorderRadius, AppColors } from "@/constants/theme";
 import { Catch, getCatchById, deleteCatch } from "@/utils/database";
 import { CatchesStackParamList } from "@/navigation/CatchesStackNavigator";
 
+const { width: screenWidth } = Dimensions.get("window");
+
 type NavigationProp = NativeStackNavigationProp<CatchesStackParamList, "CatchDetail">;
 type RouteType = RouteProp<CatchesStackParamList, "CatchDetail">;
 
@@ -32,6 +34,19 @@ export default function CatchDetailScreen() {
   const { catchId } = route.params;
   const [catchItem, setCatchItem] = useState<Catch | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  
+  // Get all photos (from photoUris array or fallback to single photoUri)
+  const photos: string[] = React.useMemo(() => {
+    if (!catchItem) return [];
+    if (catchItem.photoUris && catchItem.photoUris.length > 0) {
+      return catchItem.photoUris;
+    }
+    if (catchItem.photoUri) {
+      return [catchItem.photoUri];
+    }
+    return [];
+  }, [catchItem]);
 
   useEffect(() => {
     loadCatch();
@@ -156,12 +171,45 @@ export default function CatchDetailScreen() {
           { paddingBottom: insets.bottom + Spacing.xl + 80 },
         ]}
       >
-        {catchItem.photoUri ? (
-          <Image
-            source={{ uri: catchItem.photoUri }}
-            style={styles.photo}
-            contentFit="cover"
-          />
+        {photos.length > 0 ? (
+          <View style={styles.photoGalleryContainer}>
+            <FlatList
+              data={photos}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(_, index) => `photo-${index}`}
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / (screenWidth - Spacing.xl * 2));
+                setCurrentPhotoIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <Image
+                  source={{ uri: item }}
+                  style={[styles.photo, { width: screenWidth - Spacing.xl * 2 }]}
+                  contentFit="cover"
+                />
+              )}
+            />
+            {photos.length > 1 && (
+              <View style={styles.photoIndicators}>
+                {photos.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.photoIndicator,
+                      {
+                        backgroundColor: index === currentPhotoIndex 
+                          ? theme.link 
+                          : theme.textSecondary,
+                        opacity: index === currentPhotoIndex ? 1 : 0.4,
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
         ) : (
           <View
             style={[styles.photoPlaceholder, { backgroundColor: theme.backgroundSecondary }]}
@@ -354,11 +402,23 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.xl,
   },
+  photoGalleryContainer: {
+    marginTop: Spacing.lg,
+  },
   photo: {
-    width: "100%",
     height: 250,
     borderRadius: BorderRadius.sm,
-    marginTop: Spacing.lg,
+  },
+  photoIndicators: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  photoIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   photoPlaceholder: {
     width: "100%",

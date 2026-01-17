@@ -1,6 +1,9 @@
-import * as FileSystem from "expo-file-system";
+import * as FileSystemModule from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Catch, getAllCatches, getCatchesByDateRange } from "./database";
+
+// Cast FileSystem to any to avoid TypeScript issues with dynamic module exports
+const FileSystem = FileSystemModule as any;
 
 export type ExportFormat = "csv" | "json";
 export type DateRangeType = "all" | "month" | "year" | "custom";

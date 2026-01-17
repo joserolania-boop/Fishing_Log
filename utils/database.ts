@@ -11,9 +11,11 @@ export interface Catch {
   locationName: string | null;
   dateTime: string;
   photoUri: string | null;
+  photoUris: string[] | null; // Multiple photos support
   bait: string | null;
   weather: "sunny" | "cloudy" | "rainy" | "windy" | null;
   notes: string | null;
+  tags: string[] | null; // Custom tags support
   createdAt: string;
   updatedAt: string;
 }
@@ -80,15 +82,25 @@ export async function initDatabase(): Promise<void> {
         locationName TEXT,
         dateTime TEXT NOT NULL,
         photoUri TEXT,
+        photoUris TEXT,
         bait TEXT,
         weather TEXT,
         notes TEXT,
+        tags TEXT,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_catches_dateTime ON catches(dateTime DESC);
       CREATE INDEX IF NOT EXISTS idx_catches_species ON catches(species);
     `);
+    
+    // Try to add new columns if they don't exist (for existing databases)
+    try {
+      await db.execAsync(`ALTER TABLE catches ADD COLUMN photoUris TEXT;`);
+    } catch {}
+    try {
+      await db.execAsync(`ALTER TABLE catches ADD COLUMN tags TEXT;`);
+    } catch {}
     
     dbInitialized = true;
   } catch (error) {
@@ -170,8 +182,8 @@ export async function addCatch(catchData: NewCatch): Promise<number> {
     const now = new Date().toISOString();
     
     const result = await db.runAsync(
-      `INSERT INTO catches (species, weight, latitude, longitude, locationName, dateTime, photoUri, bait, weather, notes, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO catches (species, weight, latitude, longitude, locationName, dateTime, photoUri, photoUris, bait, weather, notes, tags, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         catchData.species,
         catchData.weight,
@@ -180,9 +192,11 @@ export async function addCatch(catchData: NewCatch): Promise<number> {
         catchData.locationName,
         catchData.dateTime,
         catchData.photoUri,
+        catchData.photoUris ? JSON.stringify(catchData.photoUris) : null,
         catchData.bait,
         catchData.weather,
         catchData.notes,
+        catchData.tags ? JSON.stringify(catchData.tags) : null,
         now,
         now,
       ]
@@ -376,4 +390,168 @@ export async function getStats(): Promise<{
     console.error("Failed to get stats:", error);
     return { totalCatches: 0, biggestCatch: null, topSpecies: null };
   }
+}
+
+// Backup all catches to JSON string
+export async function exportBackup(): Promise<string> {
+  const catches = await getAllCatches();
+  const backup = {
+    version: "2.1.0",
+    exportDate: new Date().toISOString(),
+    catchCount: catches.length,
+    catches,
+  };
+  return JSON.stringify(backup, null, 2);
+}
+
+// Restore catches from JSON backup
+export async function importBackup(jsonString: string): Promise<{ success: boolean; imported: number; error?: string }> {
+  try {
+    const backup = JSON.parse(jsonString);
+    
+    if (!backup.catches || !Array.isArray(backup.catches)) {
+      return { success: false, imported: 0, error: "Invalid backup format" };
+    }
+    
+    let imported = 0;
+    
+    for (const catchItem of backup.catches) {
+      const newCatch: NewCatch = {
+        species: catchItem.species,
+        weight: catchItem.weight,
+        latitude: catchItem.latitude,
+        longitude: catchItem.longitude,
+        locationName: catchItem.locationName,
+        dateTime: catchItem.dateTime,
+        photoUri: catchItem.photoUri,
+        photoUris: catchItem.photoUris,
+        bait: catchItem.bait,
+        weather: catchItem.weather,
+        notes: catchItem.notes,
+        tags: catchItem.tags,
+      };
+      
+      const id = await addCatch(newCatch);
+      if (id > 0) {
+        imported++;
+      }
+    }
+    
+    return { success: true, imported };
+  } catch (error) {
+    console.error("Failed to import backup:", error);
+    return { success: false, imported: 0, error: "Failed to parse backup file" };
+  }
+}
+
+// Search catches by query
+export async function searchCatches(query: string): Promise<Catch[]> {
+  const allCatches = await getAllCatches();
+  const lowerQuery = query.toLowerCase().trim();
+  
+  if (!lowerQuery) {
+    return allCatches;
+  }
+  
+  return allCatches.filter(c => 
+    c.species.toLowerCase().includes(lowerQuery) ||
+    c.locationName?.toLowerCase().includes(lowerQuery) ||
+    c.bait?.toLowerCase().includes(lowerQuery) ||
+    c.notes?.toLowerCase().includes(lowerQuery) ||
+    c.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))
+  );
+}
+
+// Filter catches by criteria
+export interface CatchFilters {
+  species?: string;
+  minWeight?: number;
+  maxWeight?: number;
+  startDate?: string;
+  endDate?: string;
+  weather?: "sunny" | "cloudy" | "rainy" | "windy";
+  tags?: string[];
+}
+
+export async function filterCatches(filters: CatchFilters): Promise<Catch[]> {
+  const allCatches = await getAllCatches();
+  
+  return allCatches.filter(c => {
+    if (filters.species && c.species.toLowerCase() !== filters.species.toLowerCase()) {
+      return false;
+    }
+    if (filters.minWeight && c.weight < filters.minWeight) {
+      return false;
+    }
+    if (filters.maxWeight && c.weight > filters.maxWeight) {
+      return false;
+    }
+    if (filters.startDate && c.dateTime < filters.startDate) {
+      return false;
+    }
+    if (filters.endDate && c.dateTime > filters.endDate) {
+      return false;
+    }
+    if (filters.weather && c.weather !== filters.weather) {
+      return false;
+    }
+    if (filters.tags && filters.tags.length > 0) {
+      if (!c.tags || !filters.tags.some(tag => c.tags?.includes(tag))) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+// Get all unique tags
+export async function getAllTags(): Promise<string[]> {
+  const allCatches = await getAllCatches();
+  const tagsSet = new Set<string>();
+  
+  for (const c of allCatches) {
+    if (c.tags) {
+      for (const tag of c.tags) {
+        tagsSet.add(tag);
+      }
+    }
+  }
+  
+  return Array.from(tagsSet).sort();
+}
+
+// Get monthly stats for charts
+export async function getMonthlyStats(): Promise<{ month: string; count: number; totalWeight: number }[]> {
+  const allCatches = await getAllCatches();
+  const monthlyData: Record<string, { count: number; totalWeight: number }> = {};
+  
+  for (const c of allCatches) {
+    const date = new Date(c.dateTime);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = { count: 0, totalWeight: 0 };
+    }
+    
+    monthlyData[monthKey].count++;
+    monthlyData[monthKey].totalWeight += c.weight;
+  }
+  
+  return Object.entries(monthlyData)
+    .map(([month, data]) => ({ month, ...data }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+// Get weekday stats for charts
+export async function getWeekdayStats(): Promise<{ day: string; count: number }[]> {
+  const allCatches = await getAllCatches();
+  const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const counts: number[] = [0, 0, 0, 0, 0, 0, 0];
+  
+  for (const c of allCatches) {
+    const date = new Date(c.dateTime);
+    counts[date.getDay()]++;
+  }
+  
+  return weekdays.map((day, index) => ({ day, count: counts[index] }));
 }

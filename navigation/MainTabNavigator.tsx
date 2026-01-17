@@ -64,7 +64,6 @@ export default function MainTabNavigator() {
         name="StatsTab"
         component={StatsScreen}
         options={{
-          ...getCommonScreenOptions({ theme, isDark }),
           headerShown: true,
           title: t.stats.title,
           tabBarIcon: ({ color, size }) => (
@@ -76,7 +75,6 @@ export default function MainTabNavigator() {
         name="ExportTab"
         component={ExportScreen}
         options={{
-          ...getCommonScreenOptions({ theme, isDark }),
           headerShown: true,
           title: t.export.title,
           tabBarIcon: ({ color, size }) => (

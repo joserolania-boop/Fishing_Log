@@ -110,7 +110,7 @@ Fishing Log（"我们"或"该应用"）尊重您的隐私。本隐私政策说�
   const currentPolicy = language === "en" ? privacyPolicyEN : privacyPolicyCH;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <ThemedView style={styles.header}>
         <ThemedText style={styles.title}>
           {language === "en" ? "Privacy Policy" : "隐私政策"}

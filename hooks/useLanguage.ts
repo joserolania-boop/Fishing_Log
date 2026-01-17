@@ -9,6 +9,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => Promise<void>;
   t: TranslationKeys;
+  isLoaded: boolean;
 }
 
 export const LanguageContext = createContext<LanguageContextType | null>(null);
@@ -52,7 +53,7 @@ export function useLanguageProvider() {
   return {
     language,
     setLanguage,
-    t: translations[language],
+    t: translations[language] as TranslationKeys,
     isLoaded,
   };
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -6,7 +6,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
   WithSpringConfig,
+  FadeInDown,
 } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -18,6 +20,7 @@ import { Catch } from "@/utils/database";
 interface CatchCardProps {
   catchItem: Catch;
   onPress: () => void;
+  index?: number; // For staggered animation
 }
 
 const springConfig: WithSpringConfig = {
@@ -30,10 +33,13 @@ const springConfig: WithSpringConfig = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function CatchCard({ catchItem, onPress }: CatchCardProps) {
+export function CatchCard({ catchItem, onPress, index = 0 }: CatchCardProps) {
   const { theme } = useTheme();
   const { settings } = useSettings();
   const scale = useSharedValue(1);
+
+  // Staggered delay based on index (max 5 items with delay)
+  const enteringDelay = Math.min(index, 5) * 50;
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -63,6 +69,7 @@ export function CatchCard({ catchItem, onPress }: CatchCardProps) {
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      entering={FadeInDown.delay(enteringDelay).duration(300).springify()}
       style={[
         styles.card,
         {

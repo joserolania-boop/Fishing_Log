@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Alert, Linking, Image } from "react-native";
+import { View, StyleSheet, Pressable, Alert, Linking, Image, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as Haptics from "expo-haptics";
 import Constants from "expo-constants";
 
 import { ScreenScrollView } from "@/components/ScreenScrollView";
@@ -11,6 +12,9 @@ import { AvatarPicker, Avatar } from "@/components/AvatarPicker";
 import { FormInput } from "@/components/FormInput";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
+import { RemindersModal } from "@/components/RemindersModal";
+import { BackupRestoreModal } from "@/components/BackupRestoreModal";
+import { WhatsNewModal, shouldShowWhatsNew } from "@/components/WhatsNewModal";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -27,17 +31,28 @@ export default function ProfileScreen() {
   const { t, language, setLanguage } = useLanguage();
   const { settings, updateSettings } = useSettings();
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [remindersModalVisible, setRemindersModalVisible] = useState(false);
+  const [backupModalVisible, setBackupModalVisible] = useState(false);
+  const [whatsNewVisible, setWhatsNewVisible] = useState(false);
   const [customAvatarUri, setCustomAvatarUri] = useState<string | null>(null);
 
   // Get version from expo-constants
   const appVersion = Constants.expoConfig?.version || "1.0.0";
 
+  const hapticFeedback = () => {
+    if (Platform.OS !== "web") {
+      Haptics.selectionAsync();
+    }
+  };
+
   const handleAvatarChange = (avatar: AvatarType) => {
+    hapticFeedback();
     setCustomAvatarUri(null); // Clear custom avatar when selecting predefined
     updateSettings({ avatar });
   };
 
   const handleCustomAvatarPick = async () => {
+    hapticFeedback();
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(t.permissions.camera, t.permissions.openSettings);
@@ -63,18 +78,22 @@ export default function ProfileScreen() {
   };
 
   const handleUnitsChange = (units: string) => {
+    hapticFeedback();
     updateSettings({ units: units as UnitSystem });
   };
 
   const handleLanguageChange = (lang: string) => {
+    hapticFeedback();
     setLanguage(lang as Language);
   };
 
   const handleThemeChange = (value: string) => {
+    hapticFeedback();
     setThemePreference(value as "auto" | "light" | "dark");
   };
 
   const handleRateApp = () => {
+    hapticFeedback();
     // Open Huawei AppGallery or app store link
     Linking.openURL("https://appgallery.huawei.com/app/C112345678");
   };
@@ -182,7 +201,15 @@ export default function ProfileScreen() {
         <ThemedText type="h4" style={styles.featuresTitle}>
           {t.tabs?.map || "Features"}
         </ThemedText>
-        <Pressable onPress={() => navigation.navigate("Map")}>
+        <Pressable onPress={() => { hapticFeedback(); navigation.navigate("Calendar"); }}>
+          <FeatureRow
+            icon="calendar"
+            label={t.calendar?.title || "Calendar"}
+            color="#9B59B6"
+            theme={theme}
+          />
+        </Pressable>
+        <Pressable onPress={() => { hapticFeedback(); navigation.navigate("Map"); }}>
           <FeatureRow
             icon="map"
             label={t.map?.title || "Fishing Map"}
@@ -190,7 +217,7 @@ export default function ProfileScreen() {
             theme={theme}
           />
         </Pressable>
-        <Pressable onPress={() => navigation.navigate("Weather")}>
+        <Pressable onPress={() => { hapticFeedback(); navigation.navigate("Weather"); }}>
           <FeatureRow
             icon="cloud"
             label={t.weather?.title || "Weather"}
@@ -198,7 +225,7 @@ export default function ProfileScreen() {
             theme={theme}
           />
         </Pressable>
-        <Pressable onPress={() => navigation.navigate("Achievements")}>
+        <Pressable onPress={() => { hapticFeedback(); navigation.navigate("Achievements"); }}>
           <FeatureRow
             icon="award"
             label={t.achievements?.title || "Achievements"}
@@ -206,11 +233,44 @@ export default function ProfileScreen() {
             theme={theme}
           />
         </Pressable>
-        <Pressable onPress={() => navigation.navigate("SpeciesGuide")}>
+        <Pressable onPress={() => { hapticFeedback(); navigation.navigate("SpeciesGuide"); }}>
           <FeatureRow
             icon="book-open"
             label={t.species?.title || "Species Guide"}
             color="#6BCB77"
+            theme={theme}
+          />
+        </Pressable>
+      </View>
+
+      <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+      {/* Tools Section */}
+      <View style={styles.section}>
+        <ThemedText type="h4" style={styles.featuresTitle}>
+          {t.profile?.tools || "Tools"}
+        </ThemedText>
+        <Pressable onPress={() => { hapticFeedback(); setRemindersModalVisible(true); }}>
+          <FeatureRow
+            icon="bell"
+            label={t.reminders?.title || "Reminders"}
+            color="#E74C3C"
+            theme={theme}
+          />
+        </Pressable>
+        <Pressable onPress={() => { hapticFeedback(); setBackupModalVisible(true); }}>
+          <FeatureRow
+            icon="download-cloud"
+            label={t.backup?.title || "Backup & Restore"}
+            color="#3498DB"
+            theme={theme}
+          />
+        </Pressable>
+        <Pressable onPress={() => { hapticFeedback(); setWhatsNewVisible(true); }}>
+          <FeatureRow
+            icon="gift"
+            label={t.whatsNew?.title || "What's New"}
+            color="#1ABC9C"
             theme={theme}
           />
         </Pressable>
@@ -248,7 +308,22 @@ export default function ProfileScreen() {
 
       <PrivacyPolicyModal
         visible={privacyModalVisible}
-        onClose={() => setPrivacyModalVisible(false)}
+        onAccept={() => setPrivacyModalVisible(false)}
+      />
+
+      <RemindersModal
+        visible={remindersModalVisible}
+        onClose={() => setRemindersModalVisible(false)}
+      />
+
+      <BackupRestoreModal
+        visible={backupModalVisible}
+        onClose={() => setBackupModalVisible(false)}
+      />
+
+      <WhatsNewModal
+        visible={whatsNewVisible}
+        onClose={() => setWhatsNewVisible(false)}
       />
     </ScreenScrollView>
   );

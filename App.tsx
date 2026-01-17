@@ -6,11 +6,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import OnboardingScreen from "@/screens/OnboardingScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ThemedView } from "@/components/ThemedView";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeContext, useThemeProvider } from "@/hooks/useTheme";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
@@ -22,6 +22,9 @@ import {
   SettingsContext,
   useSettingsProvider,
 } from "@/hooks/useSettings";
+
+// Keep the splash screen visible until we're ready
+SplashScreen.preventAutoHideAsync();
 
 const ONBOARDING_COMPLETE_KEY = "@fishing_log_onboarding_complete";
 
@@ -76,15 +79,23 @@ function AppContent() {
     }
   };
 
+  // Hide splash screen when everything is loaded
+  useEffect(() => {
+    if (languageProvider.isLoaded && settingsProvider.isLoaded && themeProvider.isLoaded && !isInitializing) {
+      SplashScreen.hideAsync();
+    }
+  }, [languageProvider.isLoaded, settingsProvider.isLoaded, themeProvider.isLoaded, isInitializing]);
+
   if (!languageProvider.isLoaded || !settingsProvider.isLoaded || !themeProvider.isLoaded || isInitializing) {
+    // Show a simple loading state while providers initialize
     return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={themeProvider.theme.link} />
-      </ThemedView>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1E88E5" />
+      </View>
     );
   }
 
-  // Show onboarding for new users
+  // Show onboarding for new users (after splash animation)
   if (showOnboarding && !showPrivacyModal) {
     return (
       <ThemeContext.Provider value={themeProvider}>

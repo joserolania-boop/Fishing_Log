@@ -6,6 +6,7 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -28,6 +29,9 @@ import { addCatch, updateCatch, getStats, NewCatch, Catch } from "@/utils/databa
 import { CatchesStackParamList } from "@/navigation/CatchesStackNavigator";
 import { compressImage } from "@/utils/imageUtils";
 import { useToast } from "@/components/Toast";
+import { haptics } from "@/utils/haptics";
+
+const MAX_PHOTOS = 5; // Maximum number of photos per catch
 
 type NavigationProp = NativeStackNavigationProp<CatchesStackParamList, "LogCatch">;
 type RouteType = RouteProp<CatchesStackParamList, "LogCatch">;
@@ -46,7 +50,17 @@ export default function LogCatchScreen() {
 
   const [species, setSpecies] = useState(editCatch?.species || "");
   const [weight, setWeight] = useState(editCatch?.weight?.toString() || "");
-  const [photoUri, setPhotoUri] = useState<string | null>(editCatch?.photoUri || null);
+  // Support for multiple photos (photoUris array)
+  const [photoUris, setPhotoUris] = useState<string[]>(() => {
+    if (editCatch?.photoUris && editCatch.photoUris.length > 0) {
+      return editCatch.photoUris;
+    }
+    // Fallback to single photo for backward compatibility
+    if (editCatch?.photoUri) {
+      return [editCatch.photoUri];
+    }
+    return [];
+  });
   const [latitude, setLatitude] = useState<number | null>(editCatch?.latitude || null);
   const [longitude, setLongitude] = useState<number | null>(editCatch?.longitude || null);
   const [locationName, setLocationName] = useState(editCatch?.locationName || "");
@@ -56,6 +70,7 @@ export default function LogCatchScreen() {
     editCatch?.weather || null
   );
   const [notes, setNotes] = useState(editCatch?.notes || "");
+  const [tags, setTags] = useState<string[]>(editCatch?.tags || []);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isCompressingImage, setIsCompressingImage] = useState(false);
@@ -194,6 +209,14 @@ export default function LogCatchScreen() {
   };
 
   const handleTakePhoto = async () => {
+    if (photoUris.length >= MAX_PHOTOS) {
+      Alert.alert(
+        t.logCatch.maxPhotos || "Maximum Photos",
+        t.logCatch.maxPhotosMessage || `You can only add up to ${MAX_PHOTOS} photos per catch.`
+      );
+      return;
+    }
+    
     let permission = cameraPermission;
     if (!permission?.granted) {
       permission = await requestCameraPermission();
@@ -236,10 +259,11 @@ export default function LogCatchScreen() {
       setIsCompressingImage(true);
       try {
         const compressedUri = await compressImage(result.assets[0].uri);
-        setPhotoUri(compressedUri);
+        setPhotoUris(prev => [...prev, compressedUri]);
+        haptics.light();
       } catch (error) {
         console.error("Failed to compress image:", error);
-        setPhotoUri(result.assets[0].uri); // Use original if compression fails
+        setPhotoUris(prev => [...prev, result.assets[0].uri]); // Use original if compression fails
       } finally {
         setIsCompressingImage(false);
       }
@@ -247,6 +271,14 @@ export default function LogCatchScreen() {
   };
 
   const handleChoosePhoto = async () => {
+    if (photoUris.length >= MAX_PHOTOS) {
+      Alert.alert(
+        t.logCatch.maxPhotos || "Maximum Photos",
+        t.logCatch.maxPhotosMessage || `You can only add up to ${MAX_PHOTOS} photos per catch.`
+      );
+      return;
+    }
+    
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
@@ -259,14 +291,20 @@ export default function LogCatchScreen() {
       setIsCompressingImage(true);
       try {
         const compressedUri = await compressImage(result.assets[0].uri);
-        setPhotoUri(compressedUri);
+        setPhotoUris(prev => [...prev, compressedUri]);
+        haptics.light();
       } catch (error) {
         console.error("Failed to compress image:", error);
-        setPhotoUri(result.assets[0].uri); // Use original if compression fails
+        setPhotoUris(prev => [...prev, result.assets[0].uri]); // Use original if compression fails
       } finally {
         setIsCompressingImage(false);
       }
     }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    haptics.light();
+    setPhotoUris(prev => prev.filter((_, i) => i !== index));
   };
 
   const showPhotoOptions = () => {
@@ -287,6 +325,7 @@ export default function LogCatchScreen() {
     if (isSaving) return;
 
     setIsSaving(true);
+    haptics.light();
     try {
       // Get stats before saving to check for new achievements
       const statsBefore = await getStats();
@@ -294,7 +333,8 @@ export default function LogCatchScreen() {
       const catchData: NewCatch = {
         species: species.trim(),
         weight: parseWeight(weight, settings.units),
-        photoUri,
+        photoUri: photoUris.length > 0 ? photoUris[0] : null, // Keep first photo for backward compatibility
+        photoUris: photoUris.length > 0 ? photoUris : null, // All photos
         latitude,
         longitude,
         locationName: locationName.trim() || null,
@@ -302,6 +342,7 @@ export default function LogCatchScreen() {
         bait: bait.trim() || null,
         weather,
         notes: notes.trim() || null,
+        tags: tags.length > 0 ? tags : null,
       };
 
       if (isEditing && editCatch) {
@@ -365,31 +406,56 @@ export default function LogCatchScreen() {
 
   return (
     <ScreenKeyboardAwareScrollView>
-      <Pressable
-        onPress={showPhotoOptions}
-        style={[
-          styles.photoButton,
-          { backgroundColor: theme.backgroundSecondary, borderColor: theme.border },
-        ]}
-      >
-        {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
-        ) : isCompressingImage ? (
-          <View style={styles.photoPlaceholder}>
-            <ActivityIndicator size="large" color={theme.link} />
-            <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-              Compressing...
-            </ThemedText>
-          </View>
-        ) : (
-          <View style={styles.photoPlaceholder}>
-            <Feather name="camera" size={40} color={theme.textSecondary} />
-            <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-              {t.logCatch.addPhoto}
-            </ThemedText>
-          </View>
-        )}
-      </Pressable>
+      {/* Photos Gallery */}
+      <View style={styles.photosSection}>
+        <View style={styles.photosSectionHeader}>
+          <ThemedText type="small" style={styles.sectionLabel}>
+            {t.logCatch.addPhoto} ({photoUris.length}/{MAX_PHOTOS})
+          </ThemedText>
+        </View>
+        
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.photosContainer}
+        >
+          {/* Existing photos */}
+          {photoUris.map((uri, index) => (
+            <View key={`photo-${index}`} style={styles.photoWrapper}>
+              <Image source={{ uri }} style={styles.photoThumbnail} contentFit="cover" />
+              <Pressable
+                onPress={() => handleRemovePhoto(index)}
+                style={[styles.removePhotoButton, { backgroundColor: theme.error }]}
+                hitSlop={8}
+              >
+                <Feather name="x" size={14} color="white" />
+              </Pressable>
+            </View>
+          ))}
+          
+          {/* Add photo button */}
+          {photoUris.length < MAX_PHOTOS && (
+            <Pressable
+              onPress={showPhotoOptions}
+              style={[
+                styles.addPhotoButton,
+                { backgroundColor: theme.backgroundSecondary, borderColor: theme.border },
+              ]}
+            >
+              {isCompressingImage ? (
+                <ActivityIndicator size="small" color={theme.link} />
+              ) : (
+                <>
+                  <Feather name="plus" size={24} color={theme.textSecondary} />
+                  <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: 4 }}>
+                    {t.common.add || "Add"}
+                  </ThemedText>
+                </>
+              )}
+            </Pressable>
+          )}
+        </ScrollView>
+      </View>
 
       <FormInput
         label={t.logCatch.species}
@@ -401,7 +467,7 @@ export default function LogCatchScreen() {
           if (speciesError && text.trim()) setSpeciesError(null);
         }}
         autoCapitalize="words"
-        error={speciesError}
+        error={speciesError || undefined}
       />
 
       <FormInput
@@ -414,7 +480,7 @@ export default function LogCatchScreen() {
           if (weightError && text.trim()) setWeightError(null);
         }}
         keyboardType="decimal-pad"
-        error={weightError}
+        error={weightError || undefined}
       />
 
       <View style={styles.section}>
@@ -493,6 +559,46 @@ export default function LogCatchScreen() {
 }
 
 const styles = StyleSheet.create({
+  photosSection: {
+    marginBottom: Spacing.xl,
+  },
+  photosSectionHeader: {
+    marginBottom: Spacing.sm,
+  },
+  photosContainer: {
+    paddingVertical: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  photoWrapper: {
+    position: "relative",
+    width: 100,
+    height: 100,
+    borderRadius: BorderRadius.sm,
+    overflow: "hidden",
+  },
+  photoThumbnail: {
+    width: "100%",
+    height: "100%",
+  },
+  removePhotoButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addPhotoButton: {
+    width: 100,
+    height: 100,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   photoButton: {
     height: 200,
     borderRadius: BorderRadius.sm,

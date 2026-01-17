@@ -14,6 +14,9 @@ export const AppColors = {
   destructive: "#E53935",
   proBadge: "#FFD700",
   adPlaceholder: "#F0F0F0",
+  success: "#4CAF50",
+  warning: "#FF9800",
+  info: "#2196F3",
 };
 
 const tintColorLight = AppColors.primary;
@@ -29,6 +32,7 @@ export const Colors = {
     link: AppColors.primary,
     accent: AppColors.accent,
     destructive: AppColors.destructive,
+    error: AppColors.destructive,
     border: AppColors.border,
     backgroundRoot: AppColors.background,
     backgroundDefault: AppColors.surface,
@@ -36,6 +40,9 @@ export const Colors = {
     backgroundTertiary: "#E8E8E8",
     proBadge: AppColors.proBadge,
     adPlaceholder: AppColors.adPlaceholder,
+    card: AppColors.surface,
+    success: AppColors.success,
+    warning: AppColors.warning,
   },
   dark: {
     text: "#ECEDEE",
@@ -46,6 +53,7 @@ export const Colors = {
     link: tintColorDark,
     accent: AppColors.accentLight,
     destructive: "#EF5350",
+    error: "#EF5350",
     border: "#404244",
     backgroundRoot: "#1F2123",
     backgroundDefault: "#2A2C2E",
@@ -53,6 +61,9 @@ export const Colors = {
     backgroundTertiary: "#404244",
     proBadge: AppColors.proBadge,
     adPlaceholder: "#353739",
+    card: "#2A2C2E",
+    success: "#66BB6A",
+    warning: "#FFA726",
   },
 };
 
