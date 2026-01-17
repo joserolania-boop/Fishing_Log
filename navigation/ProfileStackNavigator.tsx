@@ -6,6 +6,7 @@ import WeatherScreen from "@/screens/WeatherScreen";
 import AchievementsScreen from "@/screens/AchievementsScreen";
 import SpeciesGuideScreen from "@/screens/SpeciesGuideScreen";
 import CalendarScreen from "@/screens/CalendarScreen";
+import ExportScreen from "@/screens/ExportScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
@@ -17,6 +18,7 @@ export type ProfileStackParamList = {
   Achievements: undefined;
   SpeciesGuide: undefined;
   Calendar: undefined;
+  Export: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -76,6 +78,14 @@ export default function ProfileStackNavigator() {
         options={{
           ...getCommonScreenOptions({ theme, isDark, transparent: false }),
           title: t.calendar?.title || "Calendar",
+        }}
+      />
+      <Stack.Screen
+        name="Export"
+        component={ExportScreen}
+        options={{
+          ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+          title: t.export?.title || "Export Data",
         }}
       />
     </Stack.Navigator>

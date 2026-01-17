@@ -6,7 +6,7 @@ import { Platform, StyleSheet } from "react-native";
 import CatchesStackNavigator from "@/navigation/CatchesStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import StatsScreen from "@/screens/StatsScreen";
-import ExportScreen from "@/screens/ExportScreen";
+import ChallengesScreen from "@/screens/ChallengesScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
@@ -14,7 +14,7 @@ import { getCommonScreenOptions } from "@/navigation/screenOptions";
 export type MainTabParamList = {
   CatchesTab: undefined;
   StatsTab: undefined;
-  ExportTab: undefined;
+  ChallengesTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -72,13 +72,13 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="ExportTab"
-        component={ExportScreen}
+        name="ChallengesTab"
+        component={ChallengesScreen}
         options={{
           headerShown: true,
-          title: t.export.title,
+          title: t.challenges?.title || "Challenges",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="download" size={size} color={color} />
+            <Feather name="award" size={size} color={color} />
           ),
         }}
       />

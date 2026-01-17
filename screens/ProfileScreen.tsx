@@ -258,6 +258,14 @@ export default function ProfileScreen() {
             theme={theme}
           />
         </Pressable>
+        <Pressable onPress={() => { hapticFeedback(); navigation.navigate("Export"); }}>
+          <FeatureRow
+            icon="download"
+            label={t.export?.title || "Export Data"}
+            color="#9B59B6"
+            theme={theme}
+          />
+        </Pressable>
         <Pressable onPress={() => { hapticFeedback(); setBackupModalVisible(true); }}>
           <FeatureRow
             icon="download-cloud"

@@ -7,7 +7,10 @@ export type UnitSystem = "metric" | "imperial";
 export type AvatarType = 
   | "standing" | "boat" | "casting"  // Image-based avatars
   | "fish" | "shark" | "whale" | "octopus" | "crab" | "lobster"  // Sea creatures
-  | "anchor" | "ship" | "hook" | "net";  // Fishing themed
+  | "anchor" | "ship" | "hook" | "net"  // Fishing themed
+  | "dolphin" | "turtle" | "shrimp" | "squid" | "blowfish"  // More sea life
+  | "wave" | "sunrise" | "island" | "shell" | "coral"  // Nature themed
+  | "captain" | "trident" | "compass" | "lifebuoy" | "sailboat";  // Nautical themed
 
 export interface Settings {
   displayName: string;

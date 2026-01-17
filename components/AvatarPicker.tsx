@@ -20,20 +20,46 @@ const avatarImages: Record<string, any> = {
 
 // Emoji-based avatars
 const emojiAvatars: Record<string, string> = {
+  // Sea creatures
   fish: "🐟",
   shark: "🦈",
   whale: "🐋",
   octopus: "🐙",
   crab: "🦀",
   lobster: "🦞",
+  dolphin: "🐬",
+  turtle: "🐢",
+  shrimp: "🦐",
+  squid: "🦑",
+  blowfish: "🐡",
+  // Fishing themed
   anchor: "⚓",
   ship: "🚢",
   hook: "🪝",
   net: "🥅",
+  // Nature themed
+  wave: "🌊",
+  sunrise: "🌅",
+  island: "🏝️",
+  shell: "🐚",
+  coral: "🪸",
+  // Nautical themed
+  captain: "🧑‍✈️",
+  trident: "🔱",
+  compass: "🧭",
+  lifebuoy: "🛟",
+  sailboat: "⛵",
 };
 
 const imageAvatarOptions: AvatarType[] = ["standing", "boat", "casting"];
-const emojiAvatarOptions: AvatarType[] = ["fish", "shark", "whale", "octopus", "crab", "lobster", "anchor", "ship", "hook", "net"];
+const emojiAvatarOptions: AvatarType[] = [
+  // Sea creatures
+  "fish", "shark", "whale", "octopus", "crab", "lobster", "dolphin", "turtle", "shrimp", "squid", "blowfish",
+  // Fishing & nautical
+  "anchor", "ship", "hook", "net", "trident", "compass", "lifebuoy", "sailboat",
+  // Nature
+  "wave", "sunrise", "island", "shell", "coral", "captain"
+];
 
 export function AvatarPicker({ value, onChange }: AvatarPickerProps) {
   const { theme } = useTheme();
