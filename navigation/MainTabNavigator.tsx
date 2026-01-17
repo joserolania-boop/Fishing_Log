@@ -4,9 +4,9 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet } from "react-native";
 import CatchesStackNavigator from "@/navigation/CatchesStackNavigator";
+import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import StatsScreen from "@/screens/StatsScreen";
 import ExportScreen from "@/screens/ExportScreen";
-import ProfileScreen from "@/screens/ProfileScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
@@ -86,10 +86,9 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="ProfileTab"
-        component={ProfileScreen}
+        component={ProfileStackNavigator}
         options={{
-          ...getCommonScreenOptions({ theme, isDark }),
-          headerShown: true,
+          headerShown: false,
           title: t.profile.title,
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />

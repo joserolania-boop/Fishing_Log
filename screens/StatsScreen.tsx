@@ -1,18 +1,17 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { AdBanner } from "@/components/AdBanner";
-import { ProUpgradeCard } from "@/components/ProUpgradeCard";
 import { EmptyState } from "@/components/EmptyState";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings, formatWeight } from "@/hooks/useSettings";
-import { Spacing, BorderRadius } from "@/constants/theme";
-import { getStats, Catch } from "@/utils/database";
+import { Spacing, BorderRadius, AppColors } from "@/constants/theme";
+import { getStats, getAllCatches, Catch } from "@/utils/database";
 
 interface Stats {
   totalCatches: number;
@@ -20,17 +19,80 @@ interface Stats {
   topSpecies: { species: string; count: number } | null;
 }
 
+interface ChartData {
+  monthlyData: { month: string; count: number }[];
+  speciesData: { species: string; count: number; color: string }[];
+}
+
+const CHART_COLORS = [
+  AppColors.primary,
+  "#FF6B6B",
+  "#4ECDC4",
+  "#45B7D1",
+  "#96CEB4",
+  "#FFEAA7",
+  "#DDA0DD",
+  "#98D8C8",
+];
+
+const screenWidth = Dimensions.get("window").width;
+
 export default function StatsScreen() {
   const { theme } = useTheme();
   const { t } = useLanguage();
   const { settings } = useSettings();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [chartData, setChartData] = useState<ChartData>({ monthlyData: [], speciesData: [] });
   const [isLoading, setIsLoading] = useState(true);
+
+  const processChartData = (catches: Catch[]): ChartData => {
+    // Process monthly data
+    const monthCounts: Record<string, number> = {};
+    const speciesCounts: Record<string, number> = {};
+    
+    catches.forEach((c) => {
+      const date = new Date(c.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+      
+      const species = c.species.toLowerCase().trim();
+      speciesCounts[species] = (speciesCounts[species] || 0) + 1;
+    });
+
+    // Get last 6 months
+    const monthlyData: { month: string; count: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      monthlyData.push({
+        month: monthNames[d.getMonth()],
+        count: monthCounts[key] || 0,
+      });
+    }
+
+    // Get top 5 species
+    const sortedSpecies = Object.entries(speciesCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([species, count], index) => ({
+        species: species.charAt(0).toUpperCase() + species.slice(1),
+        count,
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      }));
+
+    return { monthlyData, speciesData: sortedSpecies };
+  };
 
   const loadStats = useCallback(async () => {
     try {
-      const data = await getStats();
+      const [data, catches] = await Promise.all([
+        getStats(),
+        getAllCatches(),
+      ]);
       setStats(data);
+      setChartData(processChartData(catches));
     } catch (error) {
       console.error("Failed to load stats:", error);
     } finally {
@@ -103,14 +165,11 @@ export default function StatsScreen() {
         </ThemedText>
         <View
           style={[
-            styles.chartPlaceholder,
+            styles.chartContainer,
             { backgroundColor: theme.backgroundDefault, borderColor: theme.border },
           ]}
         >
-          <Feather name="trending-up" size={48} color={theme.textSecondary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-            Chart coming soon
-          </ThemedText>
+          <BarChart data={chartData.monthlyData} theme={theme} />
         </View>
       </View>
 
@@ -120,21 +179,13 @@ export default function StatsScreen() {
         </ThemedText>
         <View
           style={[
-            styles.chartPlaceholder,
+            styles.chartContainer,
             { backgroundColor: theme.backgroundDefault, borderColor: theme.border },
           ]}
         >
-          <Feather name="pie-chart" size={48} color={theme.textSecondary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.md }}>
-            Chart coming soon
-          </ThemedText>
+          <PieChartSimple data={chartData.speciesData} theme={theme} />
         </View>
       </View>
-
-      <ProUpgradeCard
-        title={t.stats.proFeature}
-        description={t.stats.proDescription}
-      />
     </ScreenScrollView>
   );
 }
@@ -172,6 +223,182 @@ function StatCard({ icon, label, value, subtitle, theme }: StatCardProps) {
     </View>
   );
 }
+
+// Simple Bar Chart component (no external library needed)
+interface BarChartProps {
+  data: { month: string; count: number }[];
+  theme: any;
+}
+
+function BarChart({ data, theme }: BarChartProps) {
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+  const barWidth = (screenWidth - Spacing.lg * 4 - Spacing.sm * 5) / 6;
+
+  if (data.every(d => d.count === 0)) {
+    return (
+      <View style={chartStyles.emptyChart}>
+        <Feather name="trending-up" size={32} color={theme.textSecondary} />
+        <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+          No data yet
+        </ThemedText>
+      </View>
+    );
+  }
+
+  return (
+    <View style={chartStyles.barChartContainer}>
+      <View style={chartStyles.barsRow}>
+        {data.map((item, index) => {
+          const barHeight = (item.count / maxCount) * 120;
+          return (
+            <View key={index} style={chartStyles.barColumn}>
+              <View style={[chartStyles.barWrapper, { height: 120 }]}>
+                <View
+                  style={[
+                    chartStyles.bar,
+                    {
+                      height: Math.max(barHeight, 4),
+                      width: barWidth,
+                      backgroundColor: AppColors.primary,
+                    },
+                  ]}
+                />
+                {item.count > 0 && (
+                  <ThemedText type="small" style={chartStyles.barValue}>
+                    {item.count}
+                  </ThemedText>
+                )}
+              </View>
+              <ThemedText type="small" style={[chartStyles.barLabel, { color: theme.textSecondary }]}>
+                {item.month}
+              </ThemedText>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// Simple Pie Chart component (horizontal legend style)
+interface PieChartSimpleProps {
+  data: { species: string; count: number; color: string }[];
+  theme: any;
+}
+
+function PieChartSimple({ data, theme }: PieChartSimpleProps) {
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+
+  if (data.length === 0 || total === 0) {
+    return (
+      <View style={chartStyles.emptyChart}>
+        <Feather name="pie-chart" size={32} color={theme.textSecondary} />
+        <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+          No data yet
+        </ThemedText>
+      </View>
+    );
+  }
+
+  return (
+    <View style={chartStyles.pieChartContainer}>
+      {/* Progress bar style distribution */}
+      <View style={[chartStyles.progressBar, { backgroundColor: theme.backgroundSecondary }]}>
+        {data.map((item, index) => {
+          const percentage = (item.count / total) * 100;
+          return (
+            <View
+              key={index}
+              style={[
+                chartStyles.progressSegment,
+                { width: `${percentage}%`, backgroundColor: item.color },
+              ]}
+            />
+          );
+        })}
+      </View>
+      
+      {/* Legend */}
+      <View style={chartStyles.legendContainer}>
+        {data.map((item, index) => {
+          const percentage = ((item.count / total) * 100).toFixed(0);
+          return (
+            <View key={index} style={chartStyles.legendItem}>
+              <View style={[chartStyles.legendDot, { backgroundColor: item.color }]} />
+              <ThemedText type="small" style={{ flex: 1 }} numberOfLines={1}>
+                {item.species}
+              </ThemedText>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                {percentage}%
+              </ThemedText>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const chartStyles = StyleSheet.create({
+  emptyChart: {
+    height: 150,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  barChartContainer: {
+    paddingVertical: Spacing.md,
+  },
+  barsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  barColumn: {
+    alignItems: "center",
+  },
+  barWrapper: {
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  bar: {
+    borderRadius: 4,
+  },
+  barValue: {
+    position: "absolute",
+    top: -18,
+    fontSize: 10,
+  },
+  barLabel: {
+    marginTop: Spacing.xs,
+    fontSize: 10,
+  },
+  pieChartContainer: {
+    paddingVertical: Spacing.md,
+  },
+  progressBar: {
+    height: 24,
+    borderRadius: 12,
+    flexDirection: "row",
+    overflow: "hidden",
+    marginBottom: Spacing.lg,
+  },
+  progressSegment: {
+    height: "100%",
+  },
+  legendContainer: {
+    gap: Spacing.sm,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+});
 
 const statStyles = StyleSheet.create({
   card: {
@@ -216,11 +443,9 @@ const styles = StyleSheet.create({
   chartTitle: {
     marginBottom: Spacing.md,
   },
-  chartPlaceholder: {
-    height: 180,
+  chartContainer: {
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: Spacing.md,
   },
 });

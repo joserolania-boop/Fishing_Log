@@ -10,14 +10,14 @@ export interface Settings {
   displayName: string;
   avatar: AvatarType;
   units: UnitSystem;
-  isPro: boolean;
+  customAvatarUri?: string | null;
 }
 
 const defaultSettings: Settings = {
   displayName: "Angler",
   avatar: "standing",
   units: "metric",
-  isPro: false,
+  customAvatarUri: null,
 };
 
 interface SettingsContextType {

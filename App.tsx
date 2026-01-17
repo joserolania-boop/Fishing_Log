@@ -8,9 +8,11 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 
 import MainTabNavigator from "@/navigation/MainTabNavigator";
+import OnboardingScreen from "@/screens/OnboardingScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemedView } from "@/components/ThemedView";
-import { useTheme } from "@/hooks/useTheme";
+import { ToastProvider } from "@/components/Toast";
+import { ThemeContext, useThemeProvider } from "@/hooks/useTheme";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal";
 import {
   LanguageContext,
@@ -21,25 +23,36 @@ import {
   useSettingsProvider,
 } from "@/hooks/useSettings";
 
+const ONBOARDING_COMPLETE_KEY = "@fishing_log_onboarding_complete";
+
 function AppContent() {
-  const { theme } = useTheme();
+  const themeProvider = useThemeProvider();
   const languageProvider = useLanguageProvider();
   const settingsProvider = useSettingsProvider();
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    checkPrivacyPolicyAcceptance();
+    checkInitialState();
   }, []);
 
-  const checkPrivacyPolicyAcceptance = async () => {
+  const checkInitialState = async () => {
     try {
-      const accepted = await AsyncStorage.getItem("privacyPolicyAccepted");
-      if (!accepted) {
+      const [privacyAccepted, onboardingComplete] = await Promise.all([
+        AsyncStorage.getItem("privacyPolicyAccepted"),
+        AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY),
+      ]);
+      
+      if (!privacyAccepted) {
         setShowPrivacyModal(true);
       }
+      
+      if (!onboardingComplete) {
+        setShowOnboarding(true);
+      }
     } catch (error) {
-      console.error("Error checking privacy policy:", error);
+      console.error("Error checking initial state:", error);
     } finally {
       setIsInitializing(false);
     }
@@ -54,29 +67,52 @@ function AppContent() {
     }
   };
 
-  if (!languageProvider.isLoaded || !settingsProvider.isLoaded || isInitializing) {
+  const handleOnboardingComplete = async () => {
+    try {
+      await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, "true");
+      setShowOnboarding(false);
+    } catch (error) {
+      console.error("Error saving onboarding state:", error);
+    }
+  };
+
+  if (!languageProvider.isLoaded || !settingsProvider.isLoaded || !themeProvider.isLoaded || isInitializing) {
     return (
       <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.link} />
+        <ActivityIndicator size="large" color={themeProvider.theme.link} />
       </ThemedView>
     );
   }
 
+  // Show onboarding for new users
+  if (showOnboarding && !showPrivacyModal) {
+    return (
+      <ThemeContext.Provider value={themeProvider}>
+        <LanguageContext.Provider value={languageProvider}>
+          <OnboardingScreen onComplete={handleOnboardingComplete} />
+          <StatusBar style={themeProvider.isDark ? "light" : "dark"} />
+        </LanguageContext.Provider>
+      </ThemeContext.Provider>
+    );
+  }
+
   return (
-    <>
+    <ThemeContext.Provider value={themeProvider}>
       <LanguageContext.Provider value={languageProvider}>
         <SettingsContext.Provider value={settingsProvider}>
-          <NavigationContainer>
-            <MainTabNavigator />
-          </NavigationContainer>
-          <StatusBar style="auto" />
+          <ToastProvider>
+            <NavigationContainer>
+              <MainTabNavigator />
+            </NavigationContainer>
+            <PrivacyPolicyModal
+              visible={showPrivacyModal}
+              onAccept={handlePrivacyAccept}
+            />
+          </ToastProvider>
+          <StatusBar style={themeProvider.isDark ? "light" : "dark"} />
         </SettingsContext.Provider>
       </LanguageContext.Provider>
-      <PrivacyPolicyModal
-        visible={showPrivacyModal}
-        onAccept={handlePrivacyAccept}
-      />
-    </>
+    </ThemeContext.Provider>
   );
 }
 

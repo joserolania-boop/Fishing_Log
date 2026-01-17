@@ -7,7 +7,6 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { Button } from "@/components/Button";
-import { ProUpgradeCard } from "@/components/ProUpgradeCard";
 import { EmptyState } from "@/components/EmptyState";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -172,11 +171,6 @@ export default function ExportScreen() {
             </ThemedText>
           </Button>
         </View>
-
-        <ProUpgradeCard
-          title={t.export.proFeature}
-          description={t.export.proDescription}
-        />
       </View>
     </ThemedView>
   );

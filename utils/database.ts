@@ -1,5 +1,6 @@
 import * as SQLite from "expo-sqlite";
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface Catch {
   id: number;
@@ -23,8 +24,35 @@ let db: SQLite.SQLiteDatabase | null = null;
 let dbInitialized = false;
 let dbError = false;
 
+// Web storage key
+const WEB_CATCHES_KEY = "@fishing_log_catches";
+let webCatches: Catch[] = [];
+let webNextId = 1;
+
 export function isWebPlatform(): boolean {
   return Platform.OS === "web";
+}
+
+// Load catches from AsyncStorage for web
+async function loadWebCatches(): Promise<void> {
+  try {
+    const stored = await AsyncStorage.getItem(WEB_CATCHES_KEY);
+    if (stored) {
+      webCatches = JSON.parse(stored);
+      webNextId = webCatches.length > 0 ? Math.max(...webCatches.map(c => c.id)) + 1 : 1;
+    }
+  } catch (error) {
+    console.error("Failed to load web catches:", error);
+  }
+}
+
+// Save catches to AsyncStorage for web
+async function saveWebCatches(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(WEB_CATCHES_KEY, JSON.stringify(webCatches));
+  } catch (error) {
+    console.error("Failed to save web catches:", error);
+  }
 }
 
 export async function initDatabase(): Promise<void> {
@@ -32,7 +60,8 @@ export async function initDatabase(): Promise<void> {
   if (dbError) return;
   
   if (isWebPlatform()) {
-    console.log("SQLite not fully supported on web - data will not persist");
+    console.log("Using AsyncStorage for web - data will persist in browser");
+    await loadWebCatches();
     dbInitialized = true;
     return;
   }
@@ -70,14 +99,19 @@ export async function initDatabase(): Promise<void> {
 }
 
 export async function getAllCatches(): Promise<Catch[]> {
-  if (isWebPlatform() || dbError || !db) {
+  await initDatabase();
+  
+  if (isWebPlatform()) {
+    return [...webCatches].sort((a, b) => 
+      new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+    );
+  }
+  
+  if (dbError || !db) {
     return [];
   }
   
   try {
-    await initDatabase();
-    if (!db) return [];
-    
     const result = await db.getAllAsync<Catch>(
       "SELECT * FROM catches ORDER BY dateTime DESC"
     );
@@ -89,14 +123,17 @@ export async function getAllCatches(): Promise<Catch[]> {
 }
 
 export async function getCatchById(id: number): Promise<Catch | null> {
-  if (isWebPlatform() || dbError || !db) {
+  await initDatabase();
+  
+  if (isWebPlatform()) {
+    return webCatches.find(c => c.id === id) || null;
+  }
+  
+  if (dbError || !db) {
     return null;
   }
   
   try {
-    await initDatabase();
-    if (!db) return null;
-    
     const result = await db.getFirstAsync<Catch>(
       "SELECT * FROM catches WHERE id = ?",
       [id]
@@ -109,15 +146,27 @@ export async function getCatchById(id: number): Promise<Catch | null> {
 }
 
 export async function addCatch(catchData: NewCatch): Promise<number> {
-  if (isWebPlatform() || dbError) {
-    console.log("Cannot save catch on web - use Expo Go for full functionality");
+  await initDatabase();
+  
+  if (isWebPlatform()) {
+    const now = new Date().toISOString();
+    const newCatch: Catch = {
+      ...catchData,
+      id: webNextId++,
+      createdAt: now,
+      updatedAt: now,
+    };
+    webCatches.push(newCatch);
+    await saveWebCatches();
+    console.log("Catch saved to web storage:", newCatch.id);
+    return newCatch.id;
+  }
+  
+  if (dbError || !db) {
     return -1;
   }
   
   try {
-    await initDatabase();
-    if (!db) return -1;
-    
     const now = new Date().toISOString();
     
     const result = await db.runAsync(
@@ -147,14 +196,26 @@ export async function addCatch(catchData: NewCatch): Promise<number> {
 }
 
 export async function updateCatch(id: number, catchData: Partial<NewCatch>): Promise<void> {
-  if (isWebPlatform() || dbError || !db) {
+  await initDatabase();
+  
+  if (isWebPlatform()) {
+    const index = webCatches.findIndex(c => c.id === id);
+    if (index !== -1) {
+      webCatches[index] = {
+        ...webCatches[index],
+        ...catchData,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveWebCatches();
+    }
+    return;
+  }
+  
+  if (dbError || !db) {
     return;
   }
   
   try {
-    await initDatabase();
-    if (!db) return;
-    
     const now = new Date().toISOString();
     
     const fields: string[] = [];
@@ -217,14 +278,19 @@ export async function updateCatch(id: number, catchData: Partial<NewCatch>): Pro
 }
 
 export async function deleteCatch(id: number): Promise<void> {
-  if (isWebPlatform() || dbError || !db) {
+  await initDatabase();
+  
+  if (isWebPlatform()) {
+    webCatches = webCatches.filter(c => c.id !== id);
+    await saveWebCatches();
+    return;
+  }
+  
+  if (dbError || !db) {
     return;
   }
   
   try {
-    await initDatabase();
-    if (!db) return;
-    
     await db.runAsync("DELETE FROM catches WHERE id = ?", [id]);
   } catch (error) {
     console.error("Failed to delete catch:", error);
@@ -232,14 +298,21 @@ export async function deleteCatch(id: number): Promise<void> {
 }
 
 export async function getCatchesByDateRange(startDate: string, endDate: string): Promise<Catch[]> {
-  if (isWebPlatform() || dbError || !db) {
+  await initDatabase();
+  
+  if (isWebPlatform()) {
+    return webCatches.filter(c => 
+      c.dateTime >= startDate && c.dateTime <= endDate
+    ).sort((a, b) => 
+      new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime()
+    );
+  }
+  
+  if (dbError || !db) {
     return [];
   }
   
   try {
-    await initDatabase();
-    if (!db) return [];
-    
     const result = await db.getAllAsync<Catch>(
       "SELECT * FROM catches WHERE dateTime >= ? AND dateTime <= ? ORDER BY dateTime DESC",
       [startDate, endDate]
@@ -256,14 +329,31 @@ export async function getStats(): Promise<{
   biggestCatch: Catch | null;
   topSpecies: { species: string; count: number } | null;
 }> {
-  if (isWebPlatform() || dbError || !db) {
+  await initDatabase();
+  
+  if (isWebPlatform()) {
+    const totalCatches = webCatches.length;
+    
+    const biggestCatch = webCatches.length > 0 
+      ? webCatches.reduce((max, c) => c.weight > max.weight ? c : max, webCatches[0])
+      : null;
+    
+    // Calculate top species
+    const speciesCount: Record<string, number> = {};
+    for (const c of webCatches) {
+      speciesCount[c.species] = (speciesCount[c.species] || 0) + 1;
+    }
+    const topSpeciesEntry = Object.entries(speciesCount).sort((a, b) => b[1] - a[1])[0];
+    const topSpecies = topSpeciesEntry ? { species: topSpeciesEntry[0], count: topSpeciesEntry[1] } : null;
+    
+    return { totalCatches, biggestCatch, topSpecies };
+  }
+  
+  if (dbError || !db) {
     return { totalCatches: 0, biggestCatch: null, topSpecies: null };
   }
   
   try {
-    await initDatabase();
-    if (!db) return { totalCatches: 0, biggestCatch: null, topSpecies: null };
-    
     const countResult = await db.getFirstAsync<{ count: number }>(
       "SELECT COUNT(*) as count FROM catches"
     );

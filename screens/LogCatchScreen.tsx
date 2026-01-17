@@ -23,9 +23,11 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings, parseWeight } from "@/hooks/useSettings";
-import { Spacing, BorderRadius } from "@/constants/theme";
-import { addCatch, updateCatch, NewCatch, Catch } from "@/utils/database";
+import { Spacing, BorderRadius, AppColors } from "@/constants/theme";
+import { addCatch, updateCatch, getStats, NewCatch, Catch } from "@/utils/database";
 import { CatchesStackParamList } from "@/navigation/CatchesStackNavigator";
+import { compressImage } from "@/utils/imageUtils";
+import { useToast } from "@/components/Toast";
 
 type NavigationProp = NativeStackNavigationProp<CatchesStackParamList, "LogCatch">;
 type RouteType = RouteProp<CatchesStackParamList, "LogCatch">;
@@ -36,6 +38,8 @@ export default function LogCatchScreen() {
   const { theme } = useTheme();
   const { t } = useLanguage();
   const { settings } = useSettings();
+  const { showToast } = useToast();
+  const [showPhotoSheet, setShowPhotoSheet] = useState(false);
 
   const editCatch = route.params?.editCatch;
   const isEditing = !!editCatch;
@@ -54,11 +58,76 @@ export default function LogCatchScreen() {
   const [notes, setNotes] = useState(editCatch?.notes || "");
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompressingImage, setIsCompressingImage] = useState(false);
+  
+  // Validation errors
+  const [speciesError, setSpeciesError] = useState<string | null>(null);
+  const [weightError, setWeightError] = useState<string | null>(null);
 
   const [locationPermission, requestLocationPermission] = Location.useForegroundPermissions();
   const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions();
 
-  const canSave = species.trim() !== "" && weight.trim() !== "" && !isSaving;
+  // Check for new achievements after saving a catch
+  const checkNewAchievements = (catchesBefore: number, catchesAfter: number, catchWeight: number) => {
+    const milestones = [1, 10, 50, 100];
+    
+    for (const milestone of milestones) {
+      if (catchesBefore < milestone && catchesAfter >= milestone) {
+        let message = "";
+        if (milestone === 1) {
+          message = "🎣 First Catch! You've logged your first fish!";
+        } else if (milestone === 10) {
+          message = "🏆 Getting Started! You've logged 10 catches!";
+        } else if (milestone === 50) {
+          message = "⭐ Experienced Angler! 50 catches logged!";
+        } else if (milestone === 100) {
+          message = "👑 Master Fisher! 100 catches achieved!";
+        }
+        showToast(message, "success", 4000);
+        return; // Only show one achievement at a time
+      }
+    }
+    
+    // Check for big catch achievement
+    if (catchWeight >= 5) {
+      showToast("🐟 Big Catch! You caught a fish over 5kg!", "success", 4000);
+    } else if (catchWeight >= 20) {
+      showToast("🦈 Monster Catch! You caught a fish over 20kg!", "success", 4000);
+    }
+  };
+
+  const validateForm = (): boolean => {
+    let isValid = true;
+    
+    // Validate species
+    if (!species.trim()) {
+      setSpeciesError(t.logCatch.validation?.speciesRequired || "Species is required");
+      isValid = false;
+    } else {
+      setSpeciesError(null);
+    }
+    
+    // Validate weight
+    if (!weight.trim()) {
+      setWeightError(t.logCatch.validation?.weightRequired || "Weight is required");
+      isValid = false;
+    } else {
+      const weightNum = parseFloat(weight.replace(",", "."));
+      if (isNaN(weightNum) || weightNum <= 0) {
+        setWeightError(t.logCatch.validation?.weightPositive || "Weight must be positive");
+        isValid = false;
+      } else if (weightNum > 500) {
+        setWeightError(t.logCatch.validation?.weightTooHigh || "Weight seems too high");
+        isValid = false;
+      } else {
+        setWeightError(null);
+      }
+    }
+    
+    return isValid;
+  };
+
+  const canSave = species.trim() !== "" && weight.trim() !== "" && !isSaving && !isCompressingImage;
 
   useEffect(() => {
     if (!isEditing && !latitude && !longitude) {
@@ -75,21 +144,46 @@ export default function LogCatchScreen() {
       }
 
       if (permission?.granted) {
-        const location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
+        // Use lower accuracy on web for faster response
+        const accuracyLevel = Platform.OS === "web" 
+          ? Location.Accuracy.Low 
+          : Location.Accuracy.Balanced;
+        
+        // Add timeout for web platform (10 seconds)
+        const locationPromise = Location.getCurrentPositionAsync({
+          accuracy: accuracyLevel,
         });
-        setLatitude(location.coords.latitude);
-        setLongitude(location.coords.longitude);
+        
+        let location;
+        if (Platform.OS === "web") {
+          const timeoutPromise = new Promise<null>((_, reject) => 
+            setTimeout(() => reject(new Error("Location timeout")), 10000)
+          );
+          try {
+            location = await Promise.race([locationPromise, timeoutPromise]);
+          } catch (timeoutError) {
+            console.log("Location timed out on web, continuing without location");
+            setIsLoadingLocation(false);
+            return;
+          }
+        } else {
+          location = await locationPromise;
+        }
+        
+        if (location) {
+          setLatitude(location.coords.latitude);
+          setLongitude(location.coords.longitude);
 
-        const addresses = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
+          const addresses = await Location.reverseGeocodeAsync({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
 
-        if (addresses.length > 0) {
-          const addr = addresses[0];
-          const parts = [addr.city, addr.region, addr.country].filter(Boolean);
-          setLocationName(parts.join(", "));
+          if (addresses.length > 0) {
+            const addr = addresses[0];
+            const parts = [addr.city, addr.region, addr.country].filter(Boolean);
+            setLocationName(parts.join(", "));
+          }
         }
       }
     } catch (error) {
@@ -138,7 +232,17 @@ export default function LogCatchScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
+      // Compress image before saving
+      setIsCompressingImage(true);
+      try {
+        const compressedUri = await compressImage(result.assets[0].uri);
+        setPhotoUri(compressedUri);
+      } catch (error) {
+        console.error("Failed to compress image:", error);
+        setPhotoUri(result.assets[0].uri); // Use original if compression fails
+      } finally {
+        setIsCompressingImage(false);
+      }
     }
   };
 
@@ -151,23 +255,42 @@ export default function LogCatchScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setPhotoUri(result.assets[0].uri);
+      // Compress image before saving
+      setIsCompressingImage(true);
+      try {
+        const compressedUri = await compressImage(result.assets[0].uri);
+        setPhotoUri(compressedUri);
+      } catch (error) {
+        console.error("Failed to compress image:", error);
+        setPhotoUri(result.assets[0].uri); // Use original if compression fails
+      } finally {
+        setIsCompressingImage(false);
+      }
     }
   };
 
   const showPhotoOptions = () => {
-    Alert.alert(t.logCatch.addPhoto, "", [
-      { text: t.logCatch.takePhoto, onPress: handleTakePhoto },
-      { text: t.logCatch.choosePhoto, onPress: handleChoosePhoto },
-      { text: t.common.cancel, style: "cancel" },
-    ]);
+    if (Platform.OS === "web") {
+      // En web, ir directamente a elegir de galería (no hay cámara)
+      handleChoosePhoto();
+    } else {
+      Alert.alert(t.logCatch.addPhoto, "", [
+        { text: t.logCatch.takePhoto, onPress: handleTakePhoto },
+        { text: t.logCatch.choosePhoto, onPress: handleChoosePhoto },
+        { text: t.common.cancel, style: "cancel" },
+      ]);
+    }
   };
 
   const handleSave = async () => {
-    if (!canSave) return;
+    if (!validateForm()) return;
+    if (isSaving) return;
 
     setIsSaving(true);
     try {
+      // Get stats before saving to check for new achievements
+      const statsBefore = await getStats();
+      
       const catchData: NewCatch = {
         species: species.trim(),
         weight: parseWeight(weight, settings.units),
@@ -185,12 +308,16 @@ export default function LogCatchScreen() {
         await updateCatch(editCatch.id, catchData);
       } else {
         await addCatch(catchData);
+        
+        // Check for new achievements
+        const statsAfter = await getStats();
+        checkNewAchievements(statsBefore.totalCatches, statsAfter.totalCatches, catchData.weight);
       }
 
       navigation.goBack();
     } catch (error) {
       console.error("Failed to save catch:", error);
-      Alert.alert(t.common.error, t.common.retry);
+      Alert.alert(t.common.error, t.errors?.saveFailed || t.common.retry);
     } finally {
       setIsSaving(false);
     }
@@ -247,6 +374,13 @@ export default function LogCatchScreen() {
       >
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
+        ) : isCompressingImage ? (
+          <View style={styles.photoPlaceholder}>
+            <ActivityIndicator size="large" color={theme.link} />
+            <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+              Compressing...
+            </ThemedText>
+          </View>
         ) : (
           <View style={styles.photoPlaceholder}>
             <Feather name="camera" size={40} color={theme.textSecondary} />
@@ -262,8 +396,12 @@ export default function LogCatchScreen() {
         required
         placeholder={t.logCatch.speciesPlaceholder}
         value={species}
-        onChangeText={setSpecies}
+        onChangeText={(text) => {
+          setSpecies(text);
+          if (speciesError && text.trim()) setSpeciesError(null);
+        }}
         autoCapitalize="words"
+        error={speciesError}
       />
 
       <FormInput
@@ -271,8 +409,12 @@ export default function LogCatchScreen() {
         required
         placeholder={t.logCatch.weightPlaceholder}
         value={weight}
-        onChangeText={setWeight}
+        onChangeText={(text) => {
+          setWeight(text);
+          if (weightError && text.trim()) setWeightError(null);
+        }}
         keyboardType="decimal-pad"
+        error={weightError}
       />
 
       <View style={styles.section}>

@@ -21,12 +21,14 @@ export function useLanguageProvider() {
     const loadLanguage = async () => {
       try {
         const stored = await AsyncStorage.getItem(LANGUAGE_KEY);
-        if (stored === "en" || stored === "es") {
+        if (stored === "en" || stored === "es" || stored === "zh") {
           setLanguageState(stored);
         } else {
           const deviceLocale = Localization.getLocales()[0]?.languageCode;
           if (deviceLocale === "es") {
             setLanguageState("es");
+          } else if (deviceLocale === "zh") {
+            setLanguageState("zh");
           }
         }
       } catch (error) {

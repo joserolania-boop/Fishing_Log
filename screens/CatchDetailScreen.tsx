@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
-import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, Alert, ScrollView, Share } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Sharing from "expo-sharing";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -13,7 +14,7 @@ import { weatherIcons, WeatherType } from "@/components/WeatherPicker";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSettings, formatWeight } from "@/hooks/useSettings";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, AppColors } from "@/constants/theme";
 import { Catch, getCatchById, deleteCatch } from "@/utils/database";
 import { CatchesStackParamList } from "@/navigation/CatchesStackNavigator";
 
@@ -73,6 +74,39 @@ export default function CatchDetailScreen() {
         },
       ]
     );
+  };
+
+  const handleShare = async () => {
+    if (!catchItem) return;
+    
+    const weightText = formatWeight(catchItem.weight, settings.units);
+    const locationText = catchItem.locationName || "a great fishing spot";
+    
+    // Create share message using translation template
+    let shareMessage = t.catchDetail.shareText || "I caught a {weight} {species} at {location}! 🎣";
+    shareMessage = shareMessage
+      .replace("{weight}", weightText)
+      .replace("{species}", catchItem.species)
+      .replace("{location}", locationText);
+    
+    try {
+      // Try to share with image if available
+      if (catchItem.photoUri && await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(catchItem.photoUri, {
+          dialogTitle: t.catchDetail.share || "Share your catch",
+          mimeType: "image/jpeg",
+        });
+      } else {
+        // Share text only
+        await Share.share({
+          message: shareMessage,
+          title: `${catchItem.species} - ${weightText}`,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to share:", error);
+      Alert.alert(t.common.error, t.errors?.shareFailed || "Failed to share");
+    }
   };
 
   useLayoutEffect(() => {
@@ -210,12 +244,30 @@ export default function CatchDetailScreen() {
           { paddingBottom: insets.bottom + Spacing.lg, backgroundColor: theme.backgroundRoot },
         ]}
       >
-        <Button
-          onPress={handleDelete}
-          style={{ backgroundColor: theme.destructive }}
-        >
-          {t.catchDetail.delete}
-        </Button>
+        <View style={styles.buttonRow}>
+          <Button
+            onPress={handleShare}
+            style={[styles.shareButton, { backgroundColor: AppColors.primary }]}
+          >
+            <View style={styles.buttonContent}>
+              <Feather name="share-2" size={18} color="#FFFFFF" style={{ marginRight: Spacing.sm }} />
+              <ThemedText style={{ color: "#FFFFFF", fontWeight: "600" }}>
+                {t.catchDetail.share || t.common.share}
+              </ThemedText>
+            </View>
+          </Button>
+          <Button
+            onPress={handleDelete}
+            style={[styles.deleteButton, { backgroundColor: theme.destructive }]}
+          >
+            <View style={styles.buttonContent}>
+              <Feather name="trash-2" size={18} color="#FFFFFF" style={{ marginRight: Spacing.sm }} />
+              <ThemedText style={{ color: "#FFFFFF", fontWeight: "600" }}>
+                {t.catchDetail.delete}
+              </ThemedText>
+            </View>
+          </Button>
+        </View>
       </View>
     </ThemedView>
   );
@@ -343,5 +395,20 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.lg,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  shareButton: {
+    flex: 1,
+  },
+  deleteButton: {
+    flex: 1,
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
